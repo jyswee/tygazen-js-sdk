@@ -35,5 +35,8 @@
     "@dicebear/core": "9.4.3",
     "@dicebear/pixel-art": "9.4.3"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "scripts": {
+    "build": "node scripts/build.cjs"
+  }
 }

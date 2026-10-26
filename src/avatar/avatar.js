@@ -26,20 +26,42 @@ export function dataUri(pixel) {
 }
 
 /**
- * The stock face for someone with no handle yet: the catalogue's own head drained
- * to grey, no hat, glasses, beard or accessory. Same family as every claimed face,
- * so a lobby card reads "this is where your face goes" without inventing a second
- * art style. Matches Avatar.PlaceholderConfig() in the Unity SDK.
+ * The stock face for someone with no handle yet.
+ *
+ * MEASURED BUG, INHERITED AND FIXED HERE 2026-10-26. The Unity SDK's
+ * PlaceholderConfig() keys its colours "skin", "hair", "clothing", "eyes",
+ * "mouth" and sets them to greys. Neither half of that works:
+ *   - the catalogue's colour keys are skinColor, hairColor, eyesColor,
+ *     mouthColor, clothingColor, so those five keys are not read at all and
+ *     optionsFor() emits NO colour options for that config;
+ *   - and no grey exists in the curated palette anyway (skinColor is eight skin
+ *     tones), so sanitize() would throw on one if the keys were right.
+ * Rendered, the "grey" placeholder came out as an ordinary coloured face and no
+ * intended grey appeared in the SVG. Verified against the server's own renderer.
+ *
+ * So the config stays palette-legal and the greying is done at RENDER time with a
+ * saturate(0) filter. That keeps the stored shape something sanitize() accepts,
+ * and keeps "no grey in the palette" a product decision rather than something this
+ * function quietly depends on. com.tygazen has the same bug and needs the same fix.
  */
 export function placeholderConfig() {
   return {
     seed: 'tygazen-nobody',
+    // the smallest eye whites in the catalogue and a flat mouth: calm, not startled
     parts: { eyes: 'variant04', mouth: 'sad05', hair: 'short01', clothing: 'variant01' },
     probabilities: { hat: 0, glasses: 0, beard: 0, accessories: 0 },
-    colors: { skin: '9b9b9b', hair: '6d6d6d', clothing: '585858', eyes: '454545', mouth: '454545' }
+    colors: {}                                   // palette-legal by being empty
   };
 }
-export function placeholder() { return fromConfig(placeholderConfig()); }
+
+/** The placeholder, greyed. The filter is why it reads as "nobody" rather than "someone". */
+export function placeholder() {
+  const svg = fromConfig(placeholderConfig());
+  return svg.replace(/<svg\b([^>]*)>/, (m, attrs) =>
+    /style=/.test(attrs)
+      ? `<svg${attrs.replace(/style="([^"]*)"/, 'style="$1;filter:saturate(0)"')}>`
+      : `<svg${attrs} style="filter:saturate(0)">`);
+}
 
 const cache = new Map();
 

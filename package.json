@@ -1,0 +1,39 @@
+{
+  "name": "@tygazen/sdk",
+  "version": "0.1.0",
+  "description": "The one game-integration surface for the TYGA game center (tygazen.com) on the web: native signup, the pixel face builder, and clip-moment telemetry. One tygazen, one face, every game.",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./pixel-options": "./src/avatar/pixel-options.cjs",
+    "./pixel-editor": "./src/avatar/pixel-editor.js"
+  },
+  "files": [
+    "src",
+    "COPYRIGHT",
+    "LICENSE.md",
+    "Third Party Notices.md",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "license": "SEE COPYRIGHT",
+  "author": {
+    "name": "Tyga.Cloud Ltd",
+    "url": "https://tygazen.com"
+  },
+  "keywords": [
+    "tyga",
+    "tygazen",
+    "game center",
+    "avatar",
+    "signup",
+    "clips",
+    "telemetry"
+  ],
+  "peerDependencies": {
+    "@dicebear/core": "9.4.3",
+    "@dicebear/pixel-art": "9.4.3"
+  },
+  "sideEffects": false
+}

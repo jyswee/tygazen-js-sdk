@@ -1,0 +1,94 @@
+# TYGAZEN™ SDK for the web (`@tygazen/sdk`)
+
+The ONE game-integration surface for the TYGA game center at tygazen.com
+(= community.tyga.games) in a browser: native signup, the pixel face builder, and
+clip-moment telemetry. One tygazen, one face, every game.
+
+Deliberately the **same shape as the Unity SDK** (`com.tygazen`): `init`, `Session`,
+`Events`, `Signup`, `Avatar`, `Clips`. A studio shipping both a web and a Unity title
+calls the same things by the same names, and there is one contract to keep true
+instead of two that drift.
+
+TYGAZEN as a system, and the record of the mark: https://github.com/jyswee/tygazen
+
+## Hook in
+
+```js
+import { TygaZen } from '@tygazen/sdk';
+
+TygaZen.init({ gameCenterUrl: 'https://tygazen.com', titleSlug: 'your-title' });
+
+const builder = await TygaZen.Signup.mount(document.getElementById('face'));
+await builder.claim({ handle, email, dateOfBirth, country });   // the hub mails the magic link
+
+TygaZen.Avatar.fromConfig(builder.pixel);     // SVG string
+TygaZen.Avatar.dataUri(builder.pixel);        // for an <img src>
+await TygaZen.Avatar.get('sophialaurent');    // a member's face by handle
+
+TygaZen.Clips.track('boss_down', { difficulty: 'hard' });
+TygaZen.Clips.clipMoment('boss_down', -3, 8);  // "started 3s ago, keep 8s"
+```
+
+`@dicebear/core` and `@dicebear/pixel-art` are **peerDependencies**, pinned to 9.4.3.
+Install them alongside. With no bundler, add an import map pointing both at the
+copies the hub already serves from `/vendor/dicebear/`.
+
+## No key goes in a browser
+
+Every identity route is **keyless and public** — the same routes the hub's own join
+page uses (`/auth/join/handle`, `/board`, `/claim`, `/resend`). The person's own
+email is the credential and the hub mails the link. The wesell.cloud pattern: no game
+key anywhere, no game backend in between.
+
+A key in a browser bundle is not a key, it is a public string. So clip telemetry has
+two keyless transports, exactly as in the Unity SDK:
+
+| Mode | Set | Goes to | Status |
+|---|---|---|---|
+| Backend proxy | `clipsProxyUrl` | `{clipsProxyUrl}/api/gc/clips/events`, your backend forwards with its own ingest key | **works today** |
+| Keyless client id | `publicClientId` | `{gameCenterUrl}/api/v1/clips/events` + `X-TygaZen-Client` | pending, FEAT-2026-1026-0027 |
+
+Set neither and telemetry is OFF, said once, with signup and avatars unaffected.
+While the keyless route is unshipped it reports `not_live` once per page and discards,
+rather than queueing forever against a route that does not exist.
+
+## Why there are no parity fixtures here
+
+The Unity SDK bundles a **C# port** of the generator, so it needs a fixture set to
+prove the port still matches what the server renders. This package has no port. It
+draws with the same `@dicebear` packages the server renders with, through
+`pixel-options` — the same config-to-options mapping the server itself requires
+(`services/avatarDicebear.js`). A face drawn here is byte-identical to the one the
+server would store **by construction**.
+
+Measured, with a control that can fail: 10 configs rendered through this SDK and
+through the server's own `svgFor()` came back 10 identical / 0 differing, while two
+deliberately different seeds were reported as differing.
+
+`pixel-options` and `pixel-editor` are in this package byte-for-byte as the app serves
+them. Its own header says there must be exactly one implementation of that mapping —
+so this package **owns** it rather than forking it, and the app imports it from here.
+Do not copy it into a third place.
+
+## Age
+
+The 18+ check is the hub's, server-side, on the player's **own** attestation. This SDK
+collects a date of birth and forwards it. It never supplies or defaults one.
+
+## Status
+
+`Signup.mount` and the three claim calls are live. Two routes a non-hub page wants —
+claim status for a poll, and a member's face by handle — are not public on the hub
+yet; they are wired and answer `not_live` until they ship, never a fake success.
+
+---
+
+## Licence
+
+Licensed **commercially**, not open source. No licence arises from the publication of
+this repository or from installing it through a package manager — see
+[LICENSE.md](LICENSE.md) and [COPYRIGHT](COPYRIGHT). Bundled third-party components
+keep their own licences: [Third Party Notices.md](Third%20Party%20Notices.md).
+
+TYGAZEN™, TYGA.GAMES™ and the associated logos are trade marks of Tyga.Cloud Ltd,
+asserted as unregistered marks. © 2026 Tyga.Cloud Ltd. All rights reserved.

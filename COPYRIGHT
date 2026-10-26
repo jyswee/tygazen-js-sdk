@@ -1,0 +1,65 @@
+TYGAZEN SDK FOR THE WEB
+Copyright (c) 2026 Tyga.Cloud Ltd. All rights reserved.
+
+OWNER
+  Tyga.Cloud Ltd ("the Owner").
+
+WORK
+  The TYGAZEN SDK for the web (the npm package @tygazen/sdk), a software
+  development kit for building, claiming and displaying tygazen character
+  identities in browser-based games, together with all of its source code,
+  the pixel part catalogue and the config-to-options mapping from which its
+  characters are assembled, user-interface code, samples, documentation and
+  written text (together, "the Work").
+  The Work is an implementation of TYGAZEN, the character and avatar system
+  recorded at https://github.com/jyswee/tygazen, and the web counterpart of the
+  Unity SDK (com.tygazen).
+
+COPYRIGHT
+  The Work is an original literary and artistic work within the meaning of the
+  Berne Convention for the Protection of Literary and Artistic Works. Under
+  Article 5(2) protection subsists automatically upon creation and shall not be
+  subject to any formality -- no registration or deposit is required -- and it
+  applies in every contracting party to the Convention (182 at the date of this
+  notice, per the World Intellectual Property Organization, WIPO).
+  The Work's software is further protected as a literary work under Article 4
+  of the WIPO Copyright Treaty (1996) and Article 10(1) of the WTO Agreement on
+  Trade-Related Aspects of Intellectual Property Rights (TRIPS).
+  All rights in the Work are reserved to the Owner. No licence, express or
+  implied, is granted by the publication of this repository or of any release
+  attached to it. In particular, no permission is given to copy, modify,
+  redistribute, decompile, reverse engineer, or create derivative works, nor to
+  reproduce the Work or any part of it in or as training data for machine
+  learning or generative systems.
+  The third-party components identified in "Third Party Notices.md" are carved
+  out of the reservation above and remain governed by their own licences.
+
+LICENSING
+  The Work is licensed COMMERCIALLY. Rights in it are available under a separate
+  written agreement with the Owner, and enquiries are welcome via the contact
+  below. This is consistent with the reservation above rather than an exception
+  to it: rights are reserved, and they are obtained by agreement rather than by
+  access. Nothing in this notice is an offer, and no licence arises from the
+  publication of this repository, from any release attached to it, or from
+  having been given a copy.
+  For the avoidance of doubt, obtaining the Work through a package manager, a
+  git URL or a release archive is access, not a licence.
+
+TRADE MARKS
+  TYGAZEN and the TYGAZEN logo are trade marks of the Owner, used in connection
+  with computer software for creating, hosting and displaying avatars and
+  character identities across online communities and computer games. They are
+  asserted as unregistered marks and are marked with (TM). Nothing here claims
+  registration, national or international (including under the Madrid System).
+  The Owner reserves all rights in the marks, including the right to apply to
+  register them.
+  TYGA.GAMES and the associated logos are trade marks of the Owner on the same
+  basis, used in connection with the game network the Work integrates with.
+
+RECORD OF USE
+  This repository is maintained as a public, dated record of the Work and of
+  the mark as used in commerce. Each entry under Releases is timestamped by
+  GitHub independently of the Owner. First public release: 2026-10-26.
+
+CONTACT
+  Tyga.Cloud Ltd -- https://tygazen.com

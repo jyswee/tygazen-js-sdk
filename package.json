@@ -1,6 +1,6 @@
 {
   "name": "@tygazen/sdk",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "The one game-integration surface for the TYGA game center (tygazen.com) on the web: native signup, the pixel face builder, and clip-moment telemetry. One tygazen, one face, every game.",
   "type": "module",
   "main": "./src/index.js",
@@ -35,8 +35,17 @@
     "@dicebear/core": "9.4.3",
     "@dicebear/pixel-art": "9.4.3"
   },
-  "sideEffects": false,
+  "// sideEffects": "NOT false. avatar/options.js exists FOR its side effect — it publishes the config->options mapping on globalThis.PixelOptions, which pixel-editor.js reads at module scope. With sideEffects:false a bundler is free to drop `import './avatar/options.js'` entirely, and esbuild says so out loud: \"Ignoring this import because dist/avatar/options.js was marked as having no side effects\". Every bundled consumer therefore had no global and a dead editor. Naming the one file that has side effects keeps the tree-shaking everywhere else.",
+  "sideEffects": [
+    "./src/avatar/options.js",
+    "./dist/avatar/options.js"
+  ],
   "scripts": {
     "build": "node scripts/build.cjs"
+  },
+  "devDependencies": {
+    "@dicebear/core": "9.4.3",
+    "@dicebear/pixel-art": "9.4.3",
+    "esbuild": "0.25.0"
   }
 }

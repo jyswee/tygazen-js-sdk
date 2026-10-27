@@ -21,17 +21,62 @@ TygaZen.init({ gameCenterUrl: 'https://tygazen.com', titleSlug: 'your-title' });
 const builder = await TygaZen.Signup.mount(document.getElementById('face'));
 await builder.claim({ handle, email, dateOfBirth, country });   // the hub mails the magic link
 
-TygaZen.Avatar.fromConfig(builder.pixel);     // SVG string
+TygaZen.Avatar.fromConfig(builder.pixel);     // SVG string, rendered locally, no network
 TygaZen.Avatar.dataUri(builder.pixel);        // for an <img src>
-await TygaZen.Avatar.get('sophialaurent');    // a member's face by handle
 
 TygaZen.Clips.track('boss_down', { difficulty: 'hard' });
 TygaZen.Clips.clipMoment('boss_down', -3, 8);  // "started 3s ago, keep 8s"
 ```
 
-`@dicebear/core` and `@dicebear/pixel-art` are **peerDependencies**, pinned to 9.4.3.
-Install them alongside. With no bundler, add an import map pointing both at the
-copies the hub already serves from `/vendor/dicebear/`.
+`Avatar.get(handle)` and `Avatar.getMany` are in the surface but **NOT LIVE**: the hub
+route they call (`/auth/join/face`) is not deployed and answers 404 on every host. They
+were documented here as working, which was wrong. There is no public handle-to-face or
+handle-to-personaKey lookup yet. What works today is a face from a config you already
+hold (`fromConfig` / `dataUri`, pure local render) and the persona pool
+(`Roster`, below). See FEAT-2026-1026-0090.
+
+## Installing it — two routes, and the no-bundler one is a single file
+
+**With a bundler** (npm, esbuild, vite, webpack, rollup):
+
+```
+npm i @tygazen/sdk @dicebear/core@9.4.3 @dicebear/pixel-art@9.4.3
+```
+
+`@dicebear/core` and `@dicebear/pixel-art` are **peerDependencies pinned to 9.4.3** —
+install them at that exact version, not a caret range.
+
+**With no bundler**, load the prebuilt browser bundle. One file, DiceBear 9.4.3 already
+inside it, no import map and no peer install:
+
+```html
+<script type="module">
+  import { TygaZen } from 'https://cdn.jsdelivr.net/gh/jyswee/tygazen-js-sdk@v0.2.0/dist/tygazen.browser.js';
+  TygaZen.init({ gameCenterUrl: 'https://tygazen.com', titleSlug: 'your-title' });
+</script>
+```
+
+> **If you are on v0.1.0, this is why it would not run in a browser.** v0.1.0 could not,
+> at all — only Node and bundlers could load it. Three faults, all of them ours, all
+> found by tygaria in headless Chrome and reproduced here before this was written:
+>
+> 1. `dist/avatar/options.js` default-imported `./pixel-options.cjs`, which is UMD and
+>    has no ESM exports: *"The requested module './pixel-options.cjs' does not provide
+>    an export named 'default'"*. Node and every bundler can default-import CommonJS,
+>    so the one consumer that could not was the one this README told you to be.
+> 2. Over jsdelivr that `.cjs` is served as `content-type: application/node`, which a
+>    browser refuses as a module script before it even reaches fault 1.
+> 3. The import-map route this README used to recommend — pointing at the hub's
+>    `/vendor/dicebear/` — cannot work from another origin: module scripts load in CORS
+>    mode and that path sent no `Access-Control-Allow-Origin`. The hub fix is committed
+>    and queued for promotion — but the bundle above means you no longer depend on it,
+>    which is the better answer anyway: one request to a CDN instead of three to us.
+>
+> A fourth, found while fixing those: `"sideEffects": false` let bundlers drop
+> `import './avatar/options.js'` — the import that exists *only* to publish the
+> config-to-options mapping on `globalThis.PixelOptions`, which `pixel-editor.js` reads
+> at module scope. So bundled consumers had no global and a dead editor. `sideEffects`
+> now names that file.
 
 ## What a call gives you back, and the one trap in it
 

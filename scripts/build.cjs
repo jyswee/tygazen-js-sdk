@@ -23,20 +23,27 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-const files = [
-  'index.js',
-  'identity/client.js',
-  'identity/session.js',
-  'identity/signup.js',
-  'avatar/avatar.js',
-  'avatar/options.js',
-  'avatar/pixel-editor.js',
-  'avatar/pixel-options.cjs',
-  'clips/clips.js',
-];
+// EVERY .js/.cjs under src/, discovered — never a hand-kept list.
+//
+// It used to be a hand-kept list of nine names, and src/pool/roster.js was added to
+// src/index.js without being added here. The build would have obfuscated an index.js
+// that imports './pool/roster.js' and never emitted that file: a dist/ that throws on
+// its first import, from a build reporting 9/9 ok. The old list only warned about names
+// present HERE and missing from src/ — the opposite direction to the one that bit.
+function discover(dir, prefix = '') {
+  const out = [];
+  for (const e of fs.readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+    const rel = prefix ? `${prefix}/${e.name}` : e.name;
+    if (e.isDirectory()) out.push(...discover(path.join(dir, e.name), rel));
+    else if (/\.(js|cjs)$/.test(e.name)) out.push(rel);
+  }
+  return out;
+}
 
 const root = path.join(__dirname, '..');
 const dist = path.join(root, 'dist');
+const files = discover(path.join(root, 'src'));
+if (files.length === 0) { console.error('No sources found under src/ — refusing to publish an empty dist/'); process.exit(1); }
 fs.rmSync(dist, { recursive: true, force: true });
 
 const flags = [

@@ -33,6 +33,41 @@ TygaZen.Clips.clipMoment('boss_down', -3, 8);  // "started 3s ago, keep 8s"
 Install them alongside. With no bundler, add an import map pointing both at the
 copies the hub already serves from `/vendor/dicebear/`.
 
+## What a call gives you back, and the one trap in it
+
+Every network call returns the **same envelope**, and `ok` in it means *the request
+worked*, not *the answer was yes*:
+
+```js
+{ ok, status, error, data }     // ok = transport+parse succeeded
+```
+
+The application's verdict lives **inside `data`**. So there are two `ok`s and they
+answer different questions:
+
+```js
+const r = await TygaZen.client.checkHandle('mango');
+r.ok               // did the call reach us and parse?
+r.data.available   // is the handle free?        <- the answer you wanted
+
+const s = await TygaZen.Signup.resend(email);
+s.ok               // true on success
+s.data.ok          // also true on success
+                   // a 30s cooldown is HTTP 429: s.ok === false, s.data.retryIn === 30
+```
+
+**Why this bites.** A cooldown and a real failure both surface as `ok: false`, so code
+that treats any `ok === false` as "the mail did not go" will offer the player a resend
+they are rate-limited out of, and they will press it again. Branch on `status === 429`
+before treating a resend as failed. Reported by a studio building against v0.1.0 — the
+shape was correct, it was simply never written down.
+
+**`checkHandle` is on `client`, not `Signup`.** `TygaZen.Signup` is the *builder* surface
+(`mount`, `claim`, `resend`, `openHub`, `newConfig`). Handle availability is
+`TygaZen.client.checkHandle(handle)`. `Signup.claim()` already calls it for you and
+returns `{ ok: false, step: 'handle' }` when the handle is taken, so you only need
+`checkHandle` directly for as-you-type feedback.
+
 ## No key goes in a browser
 
 Every identity route is **keyless and public** — the same routes the hub's own join

@@ -13,6 +13,7 @@
  *   await builder.claim({ handle, email, dateOfBirth, country });
  *   TygaZen.Avatar.fromConfig(builder.pixel);
  *   TygaZen.Clips.track('boss_down');
+ *   await TygaZen.Roster.list({ band: 3 });   // read our members, do not copy them
  *
  * NO KEY GOES IN A BROWSER. Every identity route is keyless and public; clip
  * telemetry goes through your own backend, or through a non-secret client id once
@@ -24,6 +25,7 @@ import { Session } from './identity/session.js';
 import * as signup from './identity/signup.js';
 import * as avatar from './avatar/avatar.js';
 import { Clips as ClipsRuntime } from './clips/clips.js';
+import * as roster from './pool/roster.js';
 
 const listeners = { faceChanged: [], signedIn: [] };
 let cfg = null, client = null, clips = null;
@@ -39,6 +41,7 @@ export const TygaZen = {
       titleSlug: '',
       publicClientId: '',
       clipsProxyUrl: '',
+      rosterProxyUrl: '',
       playerToken: null,
       ...config
     };
@@ -70,6 +73,19 @@ export const TygaZen = {
     mine: avatar.mine,
     get: (handle) => avatar.get(require_(), handle),
     getMany: (handles) => avatar.getMany(require_(), handles)
+  },
+
+  /**
+   * The persona pool, read live. The ONE surface here that needs a key, so it runs from
+   * your backend with { gameKey } or from the browser through your own rosterProxyUrl —
+   * never with a key in page JavaScript. See src/pool/roster.js for the whole contract,
+   * including why an unconfigured call reports an error rather than an empty list.
+   */
+  Roster: {
+    list: (opts) => roster.list(cfg, opts),
+    get: (personaKey, opts) => roster.get(cfg, personaKey, opts),
+    all: (opts) => roster.all(cfg, opts),
+    scaffolding: roster.scaffolding
   },
 
   Clips: {

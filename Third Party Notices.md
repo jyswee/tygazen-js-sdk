@@ -5,9 +5,16 @@
 - Author: Florian Körner
 - Source: https://github.com/dicebear/dicebear
 - Licence: MIT
-- Version: 9.4.3, declared as a **peerDependency** — this package does not bundle or
-  redistribute them. Your project installs them directly from npm under the MIT
-  licence, and the notice below travels with those packages.
+- Version: 9.4.3, declared as a **peerDependency** — and, since 0.2.0, **also
+  redistributed**: `dist/tygazen.browser.js` has both packages compiled into it at
+  that exact version, so a page with no bundler can load one file. This notice used to
+  say the package "does not bundle or redistribute them", and that stopped being true
+  the moment that bundle existed.
+
+  The MIT licence permits the redistribution and requires the copyright notice and
+  permission notice to travel with it, which is what the text below is. If you install
+  via npm instead, you get them directly from npm under the same licence and this
+  notice travels with those packages too.
 
 `src/avatar/pixel-options.cjs` contains the pixel-art part catalogue transcribed
 from the style package's own JSON schema, and the mapping from a tygazen config to

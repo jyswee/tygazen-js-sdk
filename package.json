@@ -6,6 +6,7 @@
   "main": "./src/index.js",
   "exports": {
     ".": "./src/index.js",
+    "./package.json": "./package.json",
     "./pixel-options": "./src/avatar/pixel-options.cjs",
     "./pixel-editor": "./src/avatar/pixel-editor.js"
   },
@@ -35,7 +36,7 @@
     "@dicebear/core": "9.4.3",
     "@dicebear/pixel-art": "9.4.3"
   },
-  "// sideEffects": "NOT false. avatar/options.js exists FOR its side effect — it publishes the config->options mapping on globalThis.PixelOptions, which pixel-editor.js reads at module scope. With sideEffects:false a bundler is free to drop `import './avatar/options.js'` entirely, and esbuild says so out loud: \"Ignoring this import because dist/avatar/options.js was marked as having no side effects\". Every bundled consumer therefore had no global and a dead editor. Naming the one file that has side effects keeps the tree-shaking everywhere else.",
+  "// sideEffects": "NOT false. avatar/options.js exists FOR its side effect \u2014 it publishes the config->options mapping on globalThis.PixelOptions, which pixel-editor.js reads at module scope. With sideEffects:false a bundler is free to drop `import './avatar/options.js'` entirely, and esbuild says so out loud: \"Ignoring this import because dist/avatar/options.js was marked as having no side effects\". Every bundled consumer therefore had no global and a dead editor. Naming the one file that has side effects keeps the tree-shaking everywhere else.",
   "sideEffects": [
     "./src/avatar/options.js",
     "./dist/avatar/options.js"

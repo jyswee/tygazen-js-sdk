@@ -26,6 +26,7 @@ import * as signup from './identity/signup.js';
 import * as avatar from './avatar/avatar.js';
 import { Clips as ClipsRuntime } from './clips/clips.js';
 import * as roster from './pool/roster.js';
+import * as progress from './progress/index.js';
 
 const listeners = { faceChanged: [], signedIn: [] };
 let cfg = null, client = null, clips = null;
@@ -42,6 +43,11 @@ export const TygaZen = {
       publicClientId: '',
       clipsProxyUrl: '',
       rosterProxyUrl: '',
+      // READS only. Runs and awards are posted server-to-server by your backend with a
+      // vgk_ key scoped 'progress'; a score written from a page is written by whoever
+      // has devtools open. This is a BASE: the client appends everything after
+      // /api/v1/progress.
+      progressProxyUrl: '',
       playerToken: null,
       ...config
     };
@@ -86,6 +92,27 @@ export const TygaZen = {
     get: (personaKey, opts) => roster.get(cfg, personaKey, opts),
     all: (opts) => roster.all(cfg, opts),
     scaffolding: roster.scaffolding
+  },
+
+  /**
+   * Boards, achievements and clans. ONE NAME FOR EACH THING across Unity, JS and Unreal —
+   * these are the same six calls as TygaZen.Progress in the Unity package, with the same
+   * DTO field names (unity-demo-game's, from the shipped Cropsicles client).
+   *
+   * READS ONLY. There is no submit: your backend posts runs with the key. Unconfigured
+   * calls return { ok: false, error: 'progress-not-configured' } rather than an empty
+   * board, because an empty board reads to a UI as "nobody has played yet".
+   */
+  Progress: {
+    boards: (boardKey, opts) => progress.boards(cfg, boardKey, opts),
+    nations: (boardKey, opts) => progress.nations(cfg, boardKey, opts),
+    boardList: (opts) => progress.boardList(cfg, opts),
+    catalogue: (opts) => progress.catalogue(cfg, opts),
+    achievements: (personaKey, opts) => progress.achievements(cfg, personaKey, opts),
+    player: (personaKey, opts) => progress.player(cfg, personaKey, opts),
+    clan: (clanId, opts) => progress.clan(cfg, clanId, opts),
+    clanTop: (opts) => progress.clanTop(cfg, opts),
+    allPages: (boardKey, opts) => progress.allPages(cfg, boardKey, opts),
   },
 
   Clips: {

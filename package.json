@@ -11,24 +11,24 @@
     "url": "https://github.com/jyswee/tygazen-js-sdk/issues"
   },
   "type": "module",
-  "main": "./src/index.js",
+  "main": "./dist/index.js",
   "exports": {
     ".": {
-      "types": "./types/tygazen.d.ts",
-      "default": "./src/index.js"
+      "types": "./dist/tygazen.d.ts",
+      "default": "./dist/index.js"
     },
     "./package.json": "./package.json",
-    "./pixel-options": "./src/avatar/pixel-options.cjs",
-    "./pixel-editor": "./src/avatar/pixel-editor.js"
+    "./pixel-options": "./dist/avatar/pixel-options.cjs",
+    "./pixel-editor": "./dist/avatar/pixel-editor.js",
+    "./browser": "./dist/tygazen.browser.js"
   },
   "files": [
-    "types",
-    "src",
+    "dist/",
+    "README.md",
+    "CHANGELOG.md",
     "COPYRIGHT",
     "LICENSE.md",
-    "Third Party Notices.md",
-    "README.md",
-    "CHANGELOG.md"
+    "Third Party Notices.md"
   ],
   "license": "SEE LICENSE IN COPYRIGHT",
   "author": {
@@ -54,12 +54,15 @@
     "./dist/avatar/options.js"
   ],
   "scripts": {
-    "build": "node scripts/build.cjs"
+    "build": "node scripts/build.cjs && npm run build:browser && npm run build:types",
+    "build:browser": "node scripts/build-browser.cjs",
+    "build:types": "cp src/index.d.ts dist/tygazen.d.ts",
+    "clean": "rm -rf dist"
   },
   "devDependencies": {
     "@dicebear/core": "9.4.3",
     "@dicebear/pixel-art": "9.4.3",
     "esbuild": "0.25.0"
   },
-  "types": "./types/tygazen.d.ts"
+  "types": "./dist/tygazen.d.ts"
 }

@@ -1,6 +1,6 @@
 {
-  "name": "@tygazen/sdk",
-  "version": "0.2.2",
+  "name": "tygazen-js",
+  "version": "0.2.3",
   "description": "The one game-integration surface for the TYGA game center (tygazen.com) on the web: native signup, the pixel face builder, and clip-moment telemetry. One tygazen, one face, every game.",
   "repository": {
     "type": "git",

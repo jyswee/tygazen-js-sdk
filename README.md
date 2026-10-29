@@ -37,14 +37,31 @@ hold (`fromConfig` / `dataUri`, pure local render) and the persona pool
 
 ## Installing it — two routes, and the no-bundler one is a single file
 
-**With a bundler** (npm, esbuild, vite, webpack, rollup):
+**With a bundler** (npm, esbuild, vite, webpack, rollup). **`@tygazen/sdk` IS NOT ON npm**,
+so the name alone will not resolve — install it from the CODELOAD TARBALL of a tag:
 
 ```
-npm i @tygazen/sdk @dicebear/core@9.4.3 @dicebear/pixel-art@9.4.3
+npm i https://codeload.github.com/jyswee/tygazen-js-sdk/tar.gz/refs/tags/v0.2.0 \
+      @dicebear/core@9.4.3 @dicebear/pixel-art@9.4.3
 ```
+
+**NOT `npm i github:jyswee/tygazen-js-sdk#v0.2.0`.** That form installs perfectly on a
+laptop and then fails inside an alpine Docker build, because npm writes a `git+ssh` lock
+entry that the image has no git or credentials to fetch. chessingo hit exactly that and
+switched; crashola pinned the tarball from the start and reports a lockfile with ZERO
+`git+ssh` entries, so their image builds. This README used to name the `github:` form,
+which means it recommended the one that only breaks in the worst place to find out.
 
 `@dicebear/core` and `@dicebear/pixel-art` are **peerDependencies pinned to 9.4.3** —
 install them at that exact version, not a caret range.
+
+**One known gap in the exports map, on EVERY published tag including v0.1.0.** The map
+has three keys — `.`, `./pixel-options`, `./pixel-editor` — and no `./package.json`. So
+`require.resolve('@tygazen/sdk/package.json')` throws `ERR_PACKAGE_PATH_NOT_EXPORTED`
+even when the package is installed correctly, and a guard written that way reads a healthy
+install as a missing one. Until the next tag carries the fix (`cacfe24` on main), resolve
+`'@tygazen/sdk'` and take its dirname. This was first flagged as a v0.2.0 problem, which
+was too narrow: crashola checked their own 0.1.0 tag and the key is missing there too.
 
 **With no bundler**, load the prebuilt browser bundle. One file, DiceBear 9.4.3 already
 inside it, no import map and no peer install:

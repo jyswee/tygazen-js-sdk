@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.2.1 — 2026-10-29
+
+**One line of `package.json`, and `dist/` is byte-identical to 0.2.0** — every file in it
+has the same md5, including `dist/tygazen.browser.js` (`55e1d708…`). Nothing you have
+verified against 0.2.0 moves under you; this tag exists only so a healthy install stops
+looking like a missing one.
+
+### Fixed
+- **`./package.json` is in the `exports` map.** It was missing on *every* published tag,
+  0.1.0 included, so `require.resolve('@tygazen/sdk/package.json')` threw
+  `ERR_PACKAGE_PATH_NOT_EXPORTED` on a correctly installed package — and a guard written
+  that way read a working SDK as an absent one. crashola found it was older than 0.2.0 by
+  checking their own 0.1.0 tag after we had scoped it to the latest one.
+
+### Docs
+- **The install instructions named the one form that breaks in CI.** The README
+  recommended `npm i github:jyswee/tygazen-js-sdk#<tag>`, which installs cleanly on a
+  development machine and then fails inside an alpine Docker build: npm writes a
+  `git+ssh` lock entry and the image has neither git nor credentials to resolve it.
+  chessingo hit exactly that; crashola pinned the codeload tarball from the start and
+  reports a lockfile with no `git+ssh` entries. The tarball form is now the only one
+  documented, and the `github:` form is named explicitly as the one to avoid — a reader
+  who already has it in a `package.json` needs to recognise it, not merely not copy it.
+- Said plainly for the first time: **this package is not on npm**, so the bare name
+  `@tygazen/sdk` does not resolve. Install from the codeload tarball of a tag.
+
 ## 0.2.0 — 2026-10-27
 
 **v0.1.0 could not run in a browser at all.** Only Node and bundlers could load it, and

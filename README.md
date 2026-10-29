@@ -52,6 +52,13 @@ switched; crashola pinned the tarball from the start and reports a lockfile with
 `git+ssh` entries, so their image builds. This README used to name the `github:` form,
 which means it recommended the one that only breaks in the worst place to find out.
 
+**TypeScript**: declarations ship in the package (`dist/tygazen.d.ts`), so imports are
+typed with no `@types` package and no `declare module`. They describe the **shipped**
+bundle — if something is missing from them it is missing from the build, not from the
+types. Note `parts` values are `string | null` on an optional key: a string is a chosen
+variant, `null` is explicitly OFF ("no hat"; on hair, bald), and an absent key lets the
+seed decide. Those are three different states.
+
 `@dicebear/core` and `@dicebear/pixel-art` are **peerDependencies pinned to 9.4.3** —
 install them at that exact version, not a caret range.
 

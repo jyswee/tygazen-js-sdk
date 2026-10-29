@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.2.2 — 2026-10-29
+
+**Types, and the metadata a package needs to look like what it is.** `dist/` is again
+byte-identical to 0.2.0 and 0.2.1 — the obfuscated bundles have not moved since 0.2.0.
+
+### Added
+- **`dist/tygazen.d.ts` — TypeScript declarations.** This package ships an obfuscated
+  build with no source, deliberately; a declaration file is the one artifact that gives
+  you completion, signatures and type-checking without the implementation. It is
+  hand-written and it describes **the shipped bundle, not the source tree** — verified
+  by importing the installed package and enumerating its keys. `TygaZen.Progress`
+  exists in source and is NOT in this dist, so it is NOT declared: typing code that
+  throws at runtime would be worse than shipping no types.
+  The declarations carry the part-state contract in the type system rather than in a
+  comment: a part value is `string | null` on an optional key, because chosen, OFF and
+  absent are three different states and collapsing any two of them puts a hat on a
+  player who removed theirs.
+  `types` is declared both at the top level and inside `exports["."]` — with an
+  `exports` map present, TypeScript under `node16`/`nodenext` resolution ignores the
+  top-level field, so declaring only one of them makes the types invisible to exactly
+  the modern setups most consumers use.
+- `repository`, `homepage` and `bugs`. All three were absent, which for an obfuscated
+  source-free package is the worst combination available: it reads as a typosquat.
+
+### Changed
+- `license` is now `SEE LICENSE IN COPYRIGHT`. The previous `SEE COPYRIGHT` is not a
+  valid SPDX expression. The licence itself has not changed — see COPYRIGHT.
+
 ## 0.2.1 — 2026-10-29
 
 **One line of `package.json`, and `dist/` is byte-identical to 0.2.0** — every file in it

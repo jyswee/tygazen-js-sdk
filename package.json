@@ -1,11 +1,23 @@
 {
   "name": "@tygazen/sdk",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "The one game-integration surface for the TYGA game center (tygazen.com) on the web: native signup, the pixel face builder, and clip-moment telemetry. One tygazen, one face, every game.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jyswee/tygazen-js-sdk.git"
+  },
+  "homepage": "https://github.com/jyswee/tygazen-js-sdk#readme",
+  "bugs": {
+    "url": "https://github.com/jyswee/tygazen-js-sdk/issues"
+  },
   "type": "module",
   "main": "./dist/index.js",
+  "types": "./dist/tygazen.d.ts",
   "exports": {
-    ".": "./dist/index.js",
+    ".": {
+      "types": "./dist/tygazen.d.ts",
+      "default": "./dist/index.js"
+    },
     "./package.json": "./package.json",
     "./browser": "./dist/tygazen.browser.js",
     "./pixel-options": "./dist/avatar/pixel-options.cjs",
@@ -19,7 +31,7 @@
     "README.md",
     "CHANGELOG.md"
   ],
-  "license": "SEE COPYRIGHT",
+  "license": "SEE LICENSE IN COPYRIGHT",
   "author": {
     "name": "Tyga.Cloud Ltd",
     "url": "https://tygazen.com"

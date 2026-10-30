@@ -18,17 +18,37 @@ import * as pixelArt from '@dicebear/pixel-art';
 
 const P = window.PixelOptions;
 
-// What a player can tune. These are mostly heads, so Hat and Glasses are in. A group that can be
-// switched off (hair = Bald, hat, glasses) leads its grid with a "none" tile. Beard and
-// accessories stay in the full builder at /my/avatar.
+// What a player can tune. EVERY group in the catalogue appears here, and every group in
+// NULLABLE_GROUPS leads its grid with a "none" tile — the five are hair (Bald), hat,
+// glasses, beard and accessories. That is not a UI preference, it is the contract: a
+// member who has no beard must be able to SAY so, because "off" and "the seed decides"
+// are different states and only the member knows which one they mean.
+//
+// BEARD AND ACCESSORIES WERE MISSING FROM THIS LIST UNTIL 2026-10-30, and the comment
+// here used to claim they "stay in the full builder at /my/avatar". They did not: every
+// pixel-art surface — the signup wizard (join-stage.js), the in-game embed
+// (avatar-embed.js), profile settings (pixel-settings.js) and the SDK's copy of this
+// file — mounts THIS array, and /my/avatar's own picker is the 3D body/pack one. So no
+// surface anywhere let a member choose or remove a beard or an accessory: both were
+// decided by the seed, permanently, at the catalogue's 5% and 10%. The data layer was
+// right the whole time (NULLABLE_GROUPS is five, optionsFor emits probability 0), which
+// is exactly why nothing failed loudly. BUG-2026-1030-0020, and the sibling of
+// BUG-2026-1029-0028 in Unity and unity2godot's own v0.3.2 fix.
+//
+// `color: null` means "no swatch row on this tab". Beard has none deliberately: the
+// reference gives it no colour of its own (COLOR_OF_GROUP.beard === null) — it is drawn
+// in hairColor, which is picked on the Hair tab. Inventing a beard swatch here would
+// write a colour the renderer ignores.
 export const TABS = [
     { id: 'skin', label: 'Skin', shape: null, color: 'skinColor' },
     { id: 'hair', label: 'Hair', shape: 'hair', color: 'hairColor', none: 'Bald' },
     { id: 'eyes', label: 'Eyes', shape: 'eyes', color: 'eyesColor' },
     { id: 'mouth', label: 'Mouth', shape: 'mouth', color: 'mouthColor' },   // lip colour, as /my/avatar offers
     { id: 'clothing', label: 'Clothes', shape: 'clothing', color: 'clothingColor' },
+    { id: 'beard', label: 'Beard', shape: 'beard', color: null, none: 'No beard' },
     { id: 'hat', label: 'Hat', shape: 'hat', color: 'hatColor', none: 'No hat' },
-    { id: 'glasses', label: 'Glasses', shape: 'glasses', color: 'glassesColor', none: 'None' }
+    { id: 'glasses', label: 'Glasses', shape: 'glasses', color: 'glassesColor', none: 'None' },
+    { id: 'accessories', label: 'Extras', shape: 'accessories', color: 'accessoriesColor', none: 'None' }
 ];
 
 export const draw = (pixel) => createAvatar(pixelArt, P.optionsFor(pixel)).toString();

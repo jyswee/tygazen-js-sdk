@@ -1,6 +1,10 @@
 # Licence
 
-**TYGAZEN SDK for the web — © 2026 Tyga.Cloud Ltd. All rights reserved.**
+**TYGAZEN™ SDK for the web — © 2026 Tyga.Cloud Ltd. All rights reserved.**
+
+TYGAZEN™ and TYGARIA™ are trade marks of Tyga.Cloud Ltd, asserted as unregistered
+marks. Copyright subsists automatically under Article 5(2) of the Berne Convention;
+see `COPYRIGHT` for the full notice.
 
 This software is **licensed commercially**. It is not open source, and no licence is
 granted by the publication of this repository, by any release attached to it, by

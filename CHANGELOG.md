@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.3.0 — 2026-10-30
+
+**First release on npm, under the TYGARIA™ scope — and the first release whose `dist/`
+has moved since 0.2.0.** Both of those matter more than the feature.
+
+- **RENAMED: `@tygazen/sdk` is now `@tygaria/tygazen`.** All TygaZen SDK work is published
+  under the TYGARIA™ scope. Install with `npm i @tygaria/tygazen`. The codeload tarball of
+  a tag still works and stays the route for anyone pinning a git ref.
+- **ON npm.** Earlier releases were GitHub-tag only, and the README said so; that line is
+  now wrong and has been corrected. One visibility flip can no longer take a clean build
+  down, which is what happened on 2026-10-28.
+- **FIVE NULLABLE GROUPS ARE NOW EDITABLE, not three.** The builder's tab list offered an
+  "off" tile for hair, hat and glasses only, so no surface let a member choose or remove a
+  BEARD or an ACCESSORY — both were decided by the seed, permanently, at the catalogue's
+  5% and 10%, with 8 beard and 4 accessories variants unreachable. The contract
+  (`NULLABLE_GROUPS`) and the renderer were correct the whole time; only the choice was
+  missing, which is why nothing ever failed. Beard carries no colour swatch deliberately:
+  the reference gives it none and it draws in `hairColor`, picked on the Hair tab.
+
+**`dist/` IS NOT byte-identical to 0.2.x.** Obfuscation is not byte-reproducible, so every
+file in `dist/` has a new md5, including `dist/tygazen.browser.js`
+(`a20b267576dd2fa8f275b4726e5b0b51`, was `55e1d7080435775d9dfe05a254159049`). If you
+verified bytes against 0.2.0, re-verify against this release rather than assuming drift.
+That is also why this is 0.3.0 and not a 0.2.3: different bytes must never wear a version
+string that is already bound to other bytes.
+
+**`dist/progress/` is still NOT shipped.** A rebuild produces it, but `TygaZen.Progress`
+is not declared in `dist/tygazen.d.ts`, and shipping a runtime surface with no types is
+worse than not shipping it — `tsc` would reject code that actually works. The `files`
+allowlist now names the dist subpaths explicitly so the published surface is exactly what
+the declarations describe. Progress ships when its types do.
+
 ## 0.2.2 — 2026-10-29
 
 **Types, and the metadata a package needs to look like what it is.** `dist/` is again

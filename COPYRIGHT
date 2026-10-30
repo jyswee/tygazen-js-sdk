@@ -5,7 +5,7 @@ OWNER
   Tyga.Cloud Ltd ("the Owner").
 
 WORK
-  The TYGAZEN SDK for the web (the npm package @tygazen/sdk), a software
+  The TYGAZEN SDK for the web (the npm package @tygaria/tygazen), a software
   development kit for building, claiming and displaying tygazen character
   identities in browser-based games, together with all of its source code,
   the pixel part catalogue and the config-to-options mapping from which its
@@ -53,6 +53,10 @@ TRADE MARKS
   registration, national or international (including under the Madrid System).
   The Owner reserves all rights in the marks, including the right to apply to
   register them.
+  TYGARIA and the TYGARIA logo are trade marks of the Owner on the same basis,
+  used in connection with the online community and player world the Work serves,
+  and as the publisher scope under which the Work is distributed. The marks are
+  asserted as unregistered and are marked with (TM).
   TYGA.GAMES and the associated logos are trade marks of the Owner on the same
   basis, used in connection with the game network the Work integrates with.
 
@@ -62,4 +66,4 @@ RECORD OF USE
   GitHub independently of the Owner. First public release: 2026-10-26.
 
 CONTACT
-  Tyga.Cloud Ltd -- https://tygazen.com
+  Tyga.Cloud Ltd -- https://tygazen.com -- https://tygaria.com

@@ -1,4 +1,4 @@
-# TYGAZEN™ SDK for the web (`@tygazen/sdk`)
+# TYGAZEN™ SDK for the web (`@tygaria/tygazen`)
 
 The ONE game-integration surface for the TYGA game center at tygazen.com
 (= community.tyga.games) in a browser: native signup, the pixel face builder, and
@@ -14,7 +14,7 @@ TYGAZEN as a system, and the record of the mark: https://github.com/jyswee/tygaz
 ## Hook in
 
 ```js
-import { TygaZen } from '@tygazen/sdk';
+import { TygaZen } from '@tygaria/tygazen';
 
 TygaZen.init({ gameCenterUrl: 'https://tygazen.com', titleSlug: 'your-title' });
 
@@ -37,11 +37,20 @@ hold (`fromConfig` / `dataUri`, pure local render) and the persona pool
 
 ## Installing it — two routes, and the no-bundler one is a single file
 
-**With a bundler** (npm, esbuild, vite, webpack, rollup). **`@tygazen/sdk` IS NOT ON npm**,
-so the name alone will not resolve — install it from the CODELOAD TARBALL of a tag:
+**With a bundler** (npm, esbuild, vite, webpack, rollup) — from npm, as of 0.3.0:
 
 ```
-npm i https://codeload.github.com/jyswee/tygazen-js-sdk/tar.gz/refs/tags/v0.2.0 \
+npm i @tygaria/tygazen @dicebear/core@9.4.3 @dicebear/pixel-art@9.4.3
+```
+
+The two DiceBear packages are peer dependencies: install them at that EXACT version, not
+a caret range.
+
+The codeload tarball of a tag still works and remains the route for anyone pinning to a
+git ref rather than a registry version:
+
+```
+npm i https://codeload.github.com/jyswee/tygazen-js-sdk/tar.gz/refs/tags/v0.3.0 \
       @dicebear/core@9.4.3 @dicebear/pixel-art@9.4.3
 ```
 
@@ -62,13 +71,15 @@ seed decide. Those are three different states.
 `@dicebear/core` and `@dicebear/pixel-art` are **peerDependencies pinned to 9.4.3** —
 install them at that exact version, not a caret range.
 
-**One known gap in the exports map, on EVERY published tag including v0.1.0.** The map
-has three keys — `.`, `./pixel-options`, `./pixel-editor` — and no `./package.json`. So
-`require.resolve('@tygazen/sdk/package.json')` throws `ERR_PACKAGE_PATH_NOT_EXPORTED`
-even when the package is installed correctly, and a guard written that way reads a healthy
-install as a missing one. Until the next tag carries the fix (`cacfe24` on main), resolve
-`'@tygazen/sdk'` and take its dirname. This was first flagged as a v0.2.0 problem, which
-was too narrow: crashola checked their own 0.1.0 tag and the key is missing there too.
+**An exports-map gap that is now FIXED, recorded because guards were written around it.**
+On every tag up to and including v0.2.0 the map had no `./package.json` key, so
+`require.resolve('@tygaria/tygazen/package.json')` threw `ERR_PACKAGE_PATH_NOT_EXPORTED`
+on a perfectly healthy install, and a guard written that way read a healthy install as a
+missing one. First flagged as a v0.2.0 problem, which was too narrow: crashola checked
+their own 0.1.0 tag and found it missing there too. Fixed from v0.2.1 onward — the map now
+carries `.`, `./package.json`, `./pixel-options`, `./pixel-editor` and `./browser`. If you
+added the resolve-the-root-and-take-its-dirname workaround, it still works and is not
+wrong; you simply no longer need it.
 
 **With no bundler**, load the prebuilt browser bundle. One file, DiceBear 9.4.3 already
 inside it, no import map and no peer install:
@@ -196,3 +207,9 @@ keep their own licences: [Third Party Notices.md](Third%20Party%20Notices.md).
 
 TYGAZEN™, TYGA.GAMES™ and the associated logos are trade marks of Tyga.Cloud Ltd,
 asserted as unregistered marks. © 2026 Tyga.Cloud Ltd. All rights reserved.
+
+---
+
+TYGAZEN™ and TYGARIA™ are trade marks of **Tyga.Cloud Ltd**, asserted as unregistered
+marks. © 2026 Tyga.Cloud Ltd. All rights reserved — this SDK is licensed commercially
+and no licence arises from installing it. See `COPYRIGHT` and `LICENSE.md`.

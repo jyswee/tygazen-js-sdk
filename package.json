@@ -1,6 +1,6 @@
 {
-  "name": "@tygazen/sdk",
-  "version": "0.2.2",
+  "name": "@tygaria/tygazen",
+  "version": "0.3.0",
   "description": "The one game-integration surface for the TYGA game center (tygazen.com) on the web: native signup, the pixel face builder, and clip-moment telemetry. One tygazen, one face, every game.",
   "repository": {
     "type": "git",
@@ -23,7 +23,13 @@
     "./browser": "./dist/tygazen.browser.js"
   },
   "files": [
-    "dist/",
+    "dist/avatar/",
+    "dist/clips/",
+    "dist/identity/",
+    "dist/pool/",
+    "dist/index.js",
+    "dist/tygazen.browser.js",
+    "dist/tygazen.d.ts",
     "README.md",
     "CHANGELOG.md",
     "COPYRIGHT",
@@ -48,7 +54,7 @@
     "@dicebear/core": "9.4.3",
     "@dicebear/pixel-art": "9.4.3"
   },
-  "// sideEffects": "NOT false. avatar/options.js exists FOR its side effect — it publishes the config->options mapping on globalThis.PixelOptions, which pixel-editor.js reads at module scope. With sideEffects:false a bundler is free to drop `import './avatar/options.js'` entirely, and esbuild says so out loud: \"Ignoring this import because dist/avatar/options.js was marked as having no side effects\". Every bundled consumer therefore had no global and a dead editor. Naming the one file that has side effects keeps the tree-shaking everywhere else.",
+  "// sideEffects": "NOT false. avatar/options.js exists FOR its side effect \u2014 it publishes the config->options mapping on globalThis.PixelOptions, which pixel-editor.js reads at module scope. With sideEffects:false a bundler is free to drop `import './avatar/options.js'` entirely, and esbuild says so out loud: \"Ignoring this import because dist/avatar/options.js was marked as having no side effects\". Every bundled consumer therefore had no global and a dead editor. Naming the one file that has side effects keeps the tree-shaking everywhere else.",
   "sideEffects": [
     "./src/avatar/options.js",
     "./dist/avatar/options.js"

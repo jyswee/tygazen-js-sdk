@@ -1,6 +1,6 @@
 {
   "name": "@tygaria/tygazen",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "The one game-integration surface for the TYGA game center (tygazen.com) on the web: native signup, the pixel face builder, and clip-moment telemetry. One tygazen, one face, every game.",
   "repository": {
     "type": "git",
@@ -22,11 +22,13 @@
     "./pixel-editor": "./dist/avatar/pixel-editor.js",
     "./browser": "./dist/tygazen.browser.js"
   },
+  "// files": "dist/progress/ IS in this list, and 0.3.0 learning why cost two partners a workaround. Withholding TygaZen.Progress because dist/tygazen.d.ts does not declare it was a reasonable call applied at the wrong layer: dist/index.js STATICALLY re-exports ./progress/index.js, so leaving the folder out of the tarball did not hide a surface, it made every entry that reaches it throw ERR_MODULE_NOT_FOUND (BUG-2026-1030-0220). An allowlist is a hand-kept list, which is the exact shape scripts/build.cjs stopped using after src/pool/roster.js was missed; the answer is not a better list but scripts/verify-pack.cjs, which imports the TARBALL. Progress is now declared in the .d.ts too, so the types describe what ships.",
   "files": [
     "dist/avatar/",
     "dist/clips/",
     "dist/identity/",
     "dist/pool/",
+    "dist/progress/",
     "dist/index.js",
     "dist/tygazen.browser.js",
     "dist/tygazen.d.ts",
@@ -61,6 +63,7 @@
   ],
   "scripts": {
     "build": "node scripts/build.cjs && npm run build:browser && npm run build:types",
+    "verify": "node scripts/verify-pack.cjs",
     "build:browser": "node scripts/build-browser.cjs",
     "build:types": "cp src/index.d.ts dist/tygazen.d.ts",
     "clean": "rm -rf dist"

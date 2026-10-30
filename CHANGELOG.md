@@ -1,5 +1,53 @@
 # Changelog
 
+## 0.3.1 — 2026-10-30
+
+**0.3.0 could not be used. Both of its entries were broken, and two partners found them
+before any test of ours did.** This release fixes both and adds the two gates that would
+have refused 0.3.0.
+
+- **THE MAIN ENTRY COULD NOT BE IMPORTED AT ALL** (BUG-2026-1030-0220). `npm i` then
+  `import('@tygaria/tygazen')` threw `ERR_MODULE_NOT_FOUND` on `dist/progress/index.js`:
+  `dist/index.js` statically re-exports it and the `files` allowlist added in 0.3.0 did
+  not name `dist/progress/`. Reported by coilgo.
+  The 0.3.0 note withholding Progress "until its types ship" was reasonable and applied
+  at the wrong layer — a statically imported module left out of the tarball does not hide
+  a surface, it kills every entry that reaches it. **So `dist/progress/` ships AND
+  `TygaZen.Progress` is now declared in `dist/tygazen.d.ts`**: nine methods, matching the
+  Unity package name for name. The `.d.ts` header also claimed the absence had been
+  "verified by importing the installed package and enumerating its keys". It had not
+  been; the import throws before any keys exist.
+- **THE ONE-FILE BROWSER BUNDLE WAS NOT ONE FILE** (BUG-2026-1030-0221). `Signup.mount`
+  lazily imported `../avatar/pixel-editor.js` — correct from `dist/identity/`, and one
+  folder ABOVE `dist/` once esbuild flattened that module into
+  `dist/tygazen.browser.js`, because a runtime `import()` resolves against the module's
+  own URL. The browser answered 404 and the builder never drew. Found independently by
+  coilgo (integrating `/join`) and by pokattack (who called it out as "the one-file bundle
+  is not actually one file"). Both shipped a workaround rather than waiting.
+  **Fixed by resolving nothing at runtime:** a new browser entry imports the editor
+  statically and registers it through `Signup`'s `useEditor` seam before any mount can
+  run. The unbundled `dist/` keeps the lazy import, where the specifier is right and the
+  saving is real.
+- **`pixel-editor.js` reads `globalThis.PixelOptions`, not `window.PixelOptions`.** In a
+  browser the two are the same object, so every page was always correct — but `window` is
+  undefined in node, which is what stopped our own tooling from loading the browser
+  bundle to check it. It needs a DOM when `render()` runs, not to exist.
+
+### The gates, because neither defect could have been caught by reading the output
+- **`scripts/verify-pack.cjs`** (`npm run verify`) runs `npm pack`, installs the tarball
+  into a throwaway directory outside the tree, and imports **every** subpath `exports`
+  advertises, with a bogus subpath as a control that must be refused. 0.3.0's defect only
+  existed inside the tarball; from the repo everything was present.
+- **`build-browser.cjs` now asserts against esbuild's metafile** that
+  `dist/avatar/pixel-editor.js` went INTO the bundle. Nothing textual could do this: the
+  existing gate needs a `from`, which a dynamic import has not got, and the obfuscator
+  runs first — grepping the published 0.3.0 bundle for `pixel-editor` returns zero hits,
+  plain or hex-escaped. Measured both ways: bundling `dist/index.js` gives 34 inputs with
+  the editor OUT, the new entry gives 36 with it IN.
+
+**`dist/` has moved again** — obfuscation is not byte-reproducible, so every md5 is new,
+`dist/tygazen.browser.js` included. Re-verify bytes against this release.
+
 ## 0.3.0 — 2026-10-30
 
 **First release on npm, under the TYGARIA™ scope — and the first release whose `dist/`

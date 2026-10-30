@@ -13,6 +13,36 @@
  */
 import { fromConfig, rememberMine, placeholderConfig } from '../avatar/avatar.js';
 
+/**
+ * HOW THE EDITOR IS FOUND, and why there is a seam here at all.
+ *
+ * mount() used to do `await import('../avatar/pixel-editor.js')` inline. That specifier
+ * is correct for THIS file's position (dist/identity/ -> dist/avatar/) and it is wrong
+ * for every bundle, because a bundler flattens this module to the bundle's own location
+ * and a runtime import() resolves against the MODULE's URL. In dist/tygazen.browser.js
+ * the same string therefore points one folder ABOVE dist/ and the browser answers 404.
+ * Measured independently by coilgo and by pokattack on 0.3.0, both of whom shipped a
+ * workaround rather than a bug report, which is how long a 404 can hide.
+ *
+ * Worse, it is invisible to a build gate: the obfuscator turns the specifier into a
+ * computed expression, so there is no literal path left in the output to check.
+ *
+ * So a bundle REGISTERS the editor up front (src/browser.js does exactly that) and no
+ * runtime resolution happens at all — the one-file bundle is actually one file. The
+ * unbundled dist keeps the lazy import, where the specifier is right and the saving is
+ * real.
+ */
+let registeredEditor = null;
+
+/** Register the editor factory ahead of mount(). For bundles; see the note above. */
+export function useEditor(factory) { registeredEditor = factory; }
+
+async function resolveEditor() {
+  if (registeredEditor) return registeredEditor;
+  const m = await import('../avatar/pixel-editor.js');
+  return m.createPixelEditor;
+}
+
 export function openHub(client, { returnTo } = {}) {
   const u = new URL(client.base + '/auth/join');
   if (returnTo) u.searchParams.set('return_to', returnTo);
@@ -52,7 +82,7 @@ export function resend(client, email) { return client.resend(email); }
  * same split createPixelEditor() already uses on the hub.
  */
 export async function mount(el, { client, pixel = newConfig(), onChange } = {}) {
-  const { createPixelEditor } = await import('../avatar/pixel-editor.js');
+  const createPixelEditor = await resolveEditor();
   el.innerHTML = '<div class="tz-face"></div><div class="tz-tabs"></div>'
     + '<div class="tz-strip"></div><div class="tz-swatches"></div>';
   const faceEl = el.querySelector('.tz-face');

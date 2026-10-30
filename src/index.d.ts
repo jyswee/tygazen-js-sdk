@@ -8,15 +8,21 @@
  * bundle plus one .d.ts). It describes the surface; it reveals no logic.
  *
  * IT DESCRIBES THE SHIPPED BUNDLE, NOT THE SOURCE TREE, and that distinction is the
- * whole reason this is hand-written rather than generated. Source carries a
- * TygaZen.Progress surface (boards, achievements, clans) that is NOT in the published
- * dist — verified by importing the installed package in node and enumerating its keys,
- * not by reading src/index.js. Declaring Progress here would type-check code that
- * throws at runtime, which is worse than having no types at all. It arrives when the
- * dist does.
+ * whole reason this is hand-written rather than generated. If you add to src/index.js,
+ * this does not change until the artifact does.
  *
- * Keep this file honest the same way: if you add to src/index.js, this does not change
- * until the artifact does.
+ * THAT RULE HAS A SECOND HALF, AND 0.3.0 FOUND IT. Through 0.3.0 this header said
+ * TygaZen.Progress was not in the published dist and so would not be declared — and
+ * claimed that was "verified by importing the installed package in node and enumerating
+ * its keys". It was not: 0.3.0's entry throws ERR_MODULE_NOT_FOUND before any keys
+ * exist, because the files allowlist omitted dist/progress/ while dist/index.js
+ * statically re-exports it (BUG-2026-1030-0220). Withholding types was defensible;
+ * withholding the RUNTIME to match broke every entry. Keeping a declaration behind an
+ * artifact is right. Trimming the artifact to match the declarations is not — and
+ * asserting a measurement I had not taken is how a sound rule produced a dead package.
+ *
+ * Progress is declared below and dist/progress/ ships. scripts/verify-pack.cjs imports
+ * the tarball, so this file and the artifact can no longer disagree quietly.
  */
 
 /**
@@ -162,6 +168,50 @@ export interface RosterOptions {
   [key: string]: unknown;
 }
 
+/**
+ * Progression's refusal shape. An unconfigured call reports this rather than an empty
+ * board, because an empty board reads to a UI as "nobody has played yet" — which looks
+ * like success and ships.
+ */
+export interface ProgressError {
+  ok: false;
+  error: 'progress-not-configured' | 'transport' | 'http' | 'too-many-pages';
+  status?: number;
+  detail?: string | null;
+}
+
+/** One progression response. Server fields are spread onto the envelope. */
+export type ProgressResult<T = Record<string, unknown>> =
+  | ({ ok: true; status?: number } & T)
+  | ProgressError;
+
+export interface ProgressOptions {
+  /** Whatever the TITLE declares, e.g. `season`. Not a fixed enum. */
+  window?: string;
+  country?: string;
+  clan?: string;
+  limit?: number;
+  cursor?: string | null;
+  /**
+   * SERVER-SIDE ONLY, and there is deliberately no other way in. A score written from a
+   * page is written by whoever has devtools open, so writes are server-to-server with a
+   * `vgk_` key scoped `progress`. From a browser, set `progressProxyUrl` instead.
+   */
+  gameKey?: string;
+}
+
+/** {@link TygaZen.Progress.allPages} — `complete` says whether it reached the end. */
+export type ProgressAllPages = {
+  ok: boolean;
+  entries: unknown[];
+  count?: number;
+  complete: boolean;
+  error?: string;
+  status?: number;
+  detail?: string | null;
+  [key: string]: unknown;
+};
+
 export type ClipFlushStatus = 'disabled' | 'empty' | 'delivered' | 'retry_later' | 'not_live';
 
 export declare const TygaZen: {
@@ -228,6 +278,38 @@ export declare const TygaZen: {
     /** Every page, stopping on the first failure and reporting what it had. */
     all(opts?: RosterOptions): Promise<RosterPage>;
     scaffolding(text: string): string;
+  };
+
+  /**
+   * Boards, achievements and clans. THE SAME SIX NAMES as TygaZen.Progress in the Unity
+   * package, with the same DTO field names, so a studio shipping both calls one contract
+   * rather than two that drift.
+   *
+   * READS ONLY — there is no submit, and the absence is the design. See
+   * {@link ProgressOptions.gameKey}.
+   */
+  Progress: {
+    /** One page of a board. `boardKey` and `window` are whatever the title declares. */
+    boards(boardKey: string, opts?: ProgressOptions): Promise<ProgressResult>;
+    /** Per-country totals. Each country sums its players' BEST runs, not every run. */
+    nations(boardKey: string, opts?: ProgressOptions): Promise<ProgressResult>;
+    /** The boards this title declares, so a client discovers rather than hard-codes. */
+    boardList(opts?: ProgressOptions): Promise<ProgressResult>;
+    /** This title's achievement definitions — not one player's awards. */
+    catalogue(opts?: ProgressOptions): Promise<ProgressResult>;
+    /** What one tygazen earned IN THIS TITLE. Key rows on personaKey, never handle. */
+    achievements(personaKey: string, opts?: ProgressOptions): Promise<ProgressResult>;
+    /** One tygazen's progress in this title: best per board, plus the award count. */
+    player(personaKey: string, opts?: ProgressOptions): Promise<ProgressResult>;
+    /** One clan: its roster and its DERIVED score. */
+    clan(clanId: string, opts?: ProgressOptions): Promise<ProgressResult>;
+    /** The clan board for this title's scope. Clans are game-isolated today. */
+    clanTop(opts?: ProgressOptions): Promise<ProgressResult>;
+    /**
+     * Every page of a board. STOPS ON THE FIRST FAILED PAGE and reports what it had,
+     * rather than returning a short list that looks complete.
+     */
+    allPages(boardKey: string, opts?: ProgressOptions): Promise<ProgressAllPages>;
   };
 
   Clips: {

@@ -53,15 +53,19 @@ for (const dep of ['@dicebear/core', '@dicebear/pixel-art']) {
   console.log(`  pinned ${dep}@${have}`);
 }
 
-const entry = path.join(root, 'dist', 'index.js');
+// dist/browser.js, NOT dist/index.js. The browser entry statically imports the editor
+// and registers it, so the bundle resolves nothing at runtime. See src/browser.js for
+// what 0.3.0 got wrong by bundling the plain entry.
+const entry = path.join(root, 'dist', 'browser.js');
 if (!fs.existsSync(entry)) {
-  console.error('dist/index.js missing — run `npm run build` first; this bundles dist/, not src/.');
+  console.error('dist/browser.js missing — run `npm run build` first; this bundles dist/, not src/.');
   process.exit(1);
 }
 
 const out = path.join(root, 'dist', 'tygazen.browser.js');
 const esbuild = path.join(root, 'node_modules', '.bin', 'esbuild');
 
+const metaPath = path.join(root, 'dist', '.browser-meta.json');
 execFileSync(esbuild, [
   entry,
   '--bundle',
@@ -69,6 +73,7 @@ execFileSync(esbuild, [
   '--platform=browser',
   '--target=es2020',
   '--legal-comments=none',
+  `--metafile=${metaPath}`,
   `--outfile=${out}`,
 ], { stdio: 'inherit' });
 
@@ -93,6 +98,38 @@ if (unresolved.length) {
   console.error(`\nREFUSING: ${unresolved.length} import/export still names a module: ${unresolved.slice(0, 3).join(' | ')}`);
   process.exit(1);
 }
+
+// IS THE EDITOR ACTUALLY IN HERE? The defect 0.3.0 shipped (BUG-2026-1030-0221) was the
+// editor being FETCHED at runtime from a path that does not exist — Signup.mount lazily
+// imported '../avatar/pixel-editor.js', correct for dist/identity/ and one folder above
+// dist/ once flattened into this bundle. 404, and the builder never drew. Found by coilgo
+// and by pokattack independently, each of whom shipped a workaround.
+//
+// NOTHING TEXTUAL CAN CATCH THAT. The static gate above needs a `from`, which a dynamic
+// import has not got; and the obfuscator runs BEFORE this bundle, so the specifier is a
+// computed string-array call with no literal path anywhere in the output — grepping the
+// published 0.3.0 bundle for 'pixel-editor' returns zero hits, plain or hex-escaped. A
+// gate hunting a bad path would have found nothing and passed.
+//
+// Nor can the fix be "make it static everywhere": pixel-editor.js does
+// `const P = window.PixelOptions` at MODULE scope, so a static import from signup.js
+// would throw ReferenceError on `import('@tygaria/tygazen')` in node and trade one dead
+// entry for another. The lazy path has to stay for the unbundled dist; src/browser.js
+// registers the editor up front so THIS bundle never walks it.
+//
+// So ask esbuild what it put in, rather than reading the output. The metafile is
+// authoritative and obfuscation cannot touch it.
+const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
+const outKey = Object.keys(meta.outputs).find((k) => path.resolve(root, k) === out);
+const inputs = Object.keys((outKey && meta.outputs[outKey].inputs) || {});
+const needed = ['dist/avatar/pixel-editor.js', 'dist/identity/signup.js', 'dist/index.js'];
+const missing = needed.filter((n) => !inputs.some((i) => i.replace(/\\/g, '/').endsWith(n)));
+if (missing.length) {
+  console.error(`\nREFUSING: ${missing.join(', ')} did not go INTO the bundle, so the page would fetch it at runtime — which is the 404 of BUG-2026-1030-0221. Register it in src/browser.js.`);
+  process.exit(1);
+}
+console.log(`  bundle inputs: ${inputs.length}; editor, signup and the entry are all inside`);
+fs.unlinkSync(metaPath);
 
 // The whole point of the sideEffects fix. If a bundler dropped avatar/options.js again
 // the global is never set, pixel-editor reads undefined at module scope, and nothing

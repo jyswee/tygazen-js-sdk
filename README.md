@@ -86,10 +86,22 @@ inside it, no import map and no peer install:
 
 ```html
 <script type="module">
-  import { TygaZen } from 'https://cdn.jsdelivr.net/gh/jyswee/tygazen-js-sdk@v0.2.0/dist/tygazen.browser.js';
+  import { TygaZen } from 'https://cdn.jsdelivr.net/npm/@tygaria/tygazen@0.3.1/dist/tygazen.browser.js';
   TygaZen.init({ gameCenterUrl: 'https://tygazen.com', titleSlug: 'your-title' });
 </script>
 ```
+
+> **Use 0.3.1 or later. "One file" was not true before it**, and the `@v0.2.0` jsDelivr
+> URL this README used to print is a git tag from before the package was on npm.
+> Through 0.3.0 `Signup.mount` fetched the pixel editor at runtime from a path one folder
+> ABOVE the bundle, so the builder 404ed and never drew — a runtime `import()` resolves
+> against the module's own URL, and the specifier had been written for the unbundled
+> layout. coilgo and pokattack each found it and each shipped a workaround; if you serve
+> the bundle from a subfolder to make `../avatar/pixel-editor.js` resolve, you can drop
+> that now. 0.3.0's main entry could not be imported at all (`dist/progress/` was left
+> out of the tarball while the entry re-exports it), so **0.3.0 should not be used for
+> anything**. Both are BUG-2026-1030-0220 and -0221, fixed in 0.3.1, and
+> `npm run verify` now imports the packed tarball so neither can recur quietly.
 
 > **If you are on v0.1.0, this is why it would not run in a browser.** v0.1.0 could not,
 > at all — only Node and bundlers could load it. Three faults, all of them ours, all

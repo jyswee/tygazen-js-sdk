@@ -4,7 +4,7 @@
  * person"). Pixel Frame kit styles: /css/pixel-kit.css.
  *
  * Faces are drawn here with the same generator the server uses (/vendor/dicebear via the page's
- * import map) and the same config -> options mapping (window.PixelOptions), so what the player
+ * import map) and the same config -> options mapping (globalThis.PixelOptions), so what the player
  * sees is byte-identical to what the server would store.
  *
  *   const editor = createPixelEditor({ tabsEl, stripEl, swatchesEl,
@@ -16,7 +16,12 @@
 import { createAvatar } from '@dicebear/core';
 import * as pixelArt from '@dicebear/pixel-art';
 
-const P = window.PixelOptions;
+// globalThis, NOT window. options.js assigns globalThis.PixelOptions and in a browser the
+// two are the same object, so this read was correct on every page — and it made the module
+// impossible to IMPORT anywhere else: `window` is not defined in node, so the SDK's own
+// pack verification could not load the one-file browser bundle to check it. The editor
+// needs a DOM when render() runs, which is a function call; it does not need one to exist.
+const P = globalThis.PixelOptions;
 
 // What a player can tune. EVERY group in the catalogue appears here, and every group in
 // NULLABLE_GROUPS leads its grid with a "none" tile — the five are hair (Bald), hat,

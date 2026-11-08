@@ -86,7 +86,9 @@ inside it, no import map and no peer install:
 
 ```html
 <script type="module">
-  import { TygaZen } from 'https://cdn.jsdelivr.net/npm/@tygaria/tygazen@0.3.2/dist/tygazen.browser.js';
+  // 0.3.2 is published on GitHub first; the npm mirror follows. Both URLs serve the same bytes once npm has it.
+  import { TygaZen } from 'https://cdn.jsdelivr.net/gh/jyswee/tygazen-js-sdk@v0.3.2/dist/tygazen.browser.js';
+  // or, once @tygaria/tygazen@0.3.2 is on npm: 'https://cdn.jsdelivr.net/npm/@tygaria/tygazen@0.3.2/dist/tygazen.browser.js'
   TygaZen.init({ gameCenterUrl: 'https://tygazen.com', titleSlug: 'your-title' });
 </script>
 ```

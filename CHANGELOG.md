@@ -1,5 +1,110 @@
 # Changelog
 
+## 0.3.2 — 2026-11-08
+
+**Two gaps in `Signup.claim()` that forced titles to bypass it, both reported by godweave
+while building their title-hosted claim page.**
+
+- **`claim()` now carries `returnUrl`.** `client.claim()` whitelisted its fields and
+  silently dropped `returnUrl`, so the return leg (FEAT-2026-1026-0090) could only be used
+  by posting `/auth/join/claim` by hand with `builder.pixel`. `ClaimFields.returnUrl` is
+  typed; sent only when given, so a hub-page claim is byte-identical to 0.3.1.
+- **A `taken` pre-check no longer refuses the claim.** `Signup.claim()` ran
+  `checkHandle()` first and stopped on `available === false`. That check knows the handle
+  but not the email, so a RETURNING member typing their own handle was refused by the SDK
+  before the hub ever saw the request. Format and reserved refusals still stop in the SDK;
+  `taken` goes to the hub, which has the email and answers 400 taken only when the handle
+  is somebody else's (hub side: BUG-2026-1103-0232, fixed the same day).
+
+- **New: `Signup.login(email, { returnUrl })`** for "Already a Tygazen? Log in" inside a
+  title: one email, your https returnUrl, and the hub mails a sign-in link that lands the
+  member on it with `?tz_code=` (hub route `POST /auth/join/login`, vipsallowed 1.0.312).
+  Unknown emails answer exactly like known ones. This is the working replacement for
+  `openHub({ returnTo })`, which the hub never honoured (BUG-2026-1028-0042). Asked by
+  blender and godweave.
+
+No change to `mount`, `resend`, `openHub`, Progress or the browser bundle's shape.
+
+## 0.3.1 — 2026-10-30
+
+**0.3.0 could not be used. Both of its entries were broken, and two partners found them
+before any test of ours did.** This release fixes both and adds the two gates that would
+have refused 0.3.0.
+
+- **THE MAIN ENTRY COULD NOT BE IMPORTED AT ALL** (BUG-2026-1030-0220). `npm i` then
+  `import('@tygaria/tygazen')` threw `ERR_MODULE_NOT_FOUND` on `dist/progress/index.js`:
+  `dist/index.js` statically re-exports it and the `files` allowlist added in 0.3.0 did
+  not name `dist/progress/`. Reported by coilgo.
+  The 0.3.0 note withholding Progress "until its types ship" was reasonable and applied
+  at the wrong layer — a statically imported module left out of the tarball does not hide
+  a surface, it kills every entry that reaches it. **So `dist/progress/` ships AND
+  `TygaZen.Progress` is now declared in `dist/tygazen.d.ts`**: nine methods, matching the
+  Unity package name for name. The `.d.ts` header also claimed the absence had been
+  "verified by importing the installed package and enumerating its keys". It had not
+  been; the import throws before any keys exist.
+- **THE ONE-FILE BROWSER BUNDLE WAS NOT ONE FILE** (BUG-2026-1030-0221). `Signup.mount`
+  lazily imported `../avatar/pixel-editor.js` — correct from `dist/identity/`, and one
+  folder ABOVE `dist/` once esbuild flattened that module into
+  `dist/tygazen.browser.js`, because a runtime `import()` resolves against the module's
+  own URL. The browser answered 404 and the builder never drew. Found independently by
+  coilgo (integrating `/join`) and by pokattack (who called it out as "the one-file bundle
+  is not actually one file"). Both shipped a workaround rather than waiting.
+  **Fixed by resolving nothing at runtime:** a new browser entry imports the editor
+  statically and registers it through `Signup`'s `useEditor` seam before any mount can
+  run. The unbundled `dist/` keeps the lazy import, where the specifier is right and the
+  saving is real.
+- **`pixel-editor.js` reads `globalThis.PixelOptions`, not `window.PixelOptions`.** In a
+  browser the two are the same object, so every page was always correct — but `window` is
+  undefined in node, which is what stopped our own tooling from loading the browser
+  bundle to check it. It needs a DOM when `render()` runs, not to exist.
+
+### The gates, because neither defect could have been caught by reading the output
+- **`scripts/verify-pack.cjs`** (`npm run verify`) runs `npm pack`, installs the tarball
+  into a throwaway directory outside the tree, and imports **every** subpath `exports`
+  advertises, with a bogus subpath as a control that must be refused. 0.3.0's defect only
+  existed inside the tarball; from the repo everything was present.
+- **`build-browser.cjs` now asserts against esbuild's metafile** that
+  `dist/avatar/pixel-editor.js` went INTO the bundle. Nothing textual could do this: the
+  existing gate needs a `from`, which a dynamic import has not got, and the obfuscator
+  runs first — grepping the published 0.3.0 bundle for `pixel-editor` returns zero hits,
+  plain or hex-escaped. Measured both ways: bundling `dist/index.js` gives 34 inputs with
+  the editor OUT, the new entry gives 36 with it IN.
+
+**`dist/` has moved again** — obfuscation is not byte-reproducible, so every md5 is new,
+`dist/tygazen.browser.js` included. Re-verify bytes against this release.
+
+## 0.3.0 — 2026-10-30
+
+**First release on npm, under the TYGARIA™ scope — and the first release whose `dist/`
+has moved since 0.2.0.** Both of those matter more than the feature.
+
+- **RENAMED: `@tygazen/sdk` is now `@tygaria/tygazen`.** All TygaZen SDK work is published
+  under the TYGARIA™ scope. Install with `npm i @tygaria/tygazen`. The codeload tarball of
+  a tag still works and stays the route for anyone pinning a git ref.
+- **ON npm.** Earlier releases were GitHub-tag only, and the README said so; that line is
+  now wrong and has been corrected. One visibility flip can no longer take a clean build
+  down, which is what happened on 2026-10-28.
+- **FIVE NULLABLE GROUPS ARE NOW EDITABLE, not three.** The builder's tab list offered an
+  "off" tile for hair, hat and glasses only, so no surface let a member choose or remove a
+  BEARD or an ACCESSORY — both were decided by the seed, permanently, at the catalogue's
+  5% and 10%, with 8 beard and 4 accessories variants unreachable. The contract
+  (`NULLABLE_GROUPS`) and the renderer were correct the whole time; only the choice was
+  missing, which is why nothing ever failed. Beard carries no colour swatch deliberately:
+  the reference gives it none and it draws in `hairColor`, picked on the Hair tab.
+
+**`dist/` IS NOT byte-identical to 0.2.x.** Obfuscation is not byte-reproducible, so every
+file in `dist/` has a new md5, including `dist/tygazen.browser.js`
+(`a20b267576dd2fa8f275b4726e5b0b51`, was `55e1d7080435775d9dfe05a254159049`). If you
+verified bytes against 0.2.0, re-verify against this release rather than assuming drift.
+That is also why this is 0.3.0 and not a 0.2.3: different bytes must never wear a version
+string that is already bound to other bytes.
+
+**`dist/progress/` is still NOT shipped.** A rebuild produces it, but `TygaZen.Progress`
+is not declared in `dist/tygazen.d.ts`, and shipping a runtime surface with no types is
+worse than not shipping it — `tsc` would reject code that actually works. The `files`
+allowlist now names the dist subpaths explicitly so the published surface is exactly what
+the declarations describe. Progress ships when its types do.
+
 ## 0.2.2 — 2026-10-29
 
 **Types, and the metadata a package needs to look like what it is.** `dist/` is again

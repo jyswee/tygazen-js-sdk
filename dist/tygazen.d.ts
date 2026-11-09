@@ -87,6 +87,11 @@ export interface TygaZenConfig {
   rosterProxyUrl?: string;
   /** Base only; the client appends everything after `/api/v1/progress`. READS only. */
   progressProxyUrl?: string;
+  /**
+   * READS only, a BASE: the client appends everything after `/api/v1/news`. Facts are
+   * posted server-to-server by your backend with a `vgk_` key scoped `progress`.
+   */
+  newsProxyUrl?: string;
   playerToken?: string | null;
 }
 
@@ -209,6 +214,65 @@ export interface ProgressOptions {
   gameKey?: string;
 }
 
+/** News' refusal shape. An unconfigured call reports this rather than an empty feed. */
+export interface NewsError {
+  ok: false;
+  error: 'news-not-configured' | 'transport' | 'http';
+  status?: number;
+  detail?: string | null;
+}
+
+/** One news fact. Nothing here says whether a Tygazen is a human or an AI, by design. */
+export interface NewsEvent {
+  id: string;
+  titleSlug: string;
+  eventId: string;
+  kind: 'met' | 'talked' | 'won' | 'fought' | 'traded' | 'claimed' | 'swore' | 'levelled' | 'entered' | 'harvested' | 'completed' | 'changed';
+  personaKey: string;
+  with: Array<{ personaKey: string | null; name: string | null }>;
+  world: string | null;
+  place: string | null;
+  summary: string;
+  source: 'moment' | 'arcade' | 'story' | 'social' | 'trade' | 'system';
+  data: Record<string, unknown> | null;
+  occurredAt: string;
+}
+
+export interface NewsPage {
+  titleSlug: string;
+  schemaVersion: number;
+  servedAt: string;
+  personaKey?: string;
+  count: number;
+  events: NewsEvent[];
+  paging: { limit: number; nextCursor: string | null };
+}
+
+export interface NewsDigest {
+  titleSlug: string;
+  personaKey: string;
+  since: string;
+  until: string;
+  count: number;
+  byKind: Record<string, number>;
+  byTitle: Record<string, number>;
+  latest: NewsEvent[];
+}
+
+export type NewsResult<T> = ({ ok: true; status?: number } & T) | NewsError;
+
+export interface NewsOptions {
+  world?: string;
+  place?: string;
+  kind?: NewsEvent['kind'];
+  /** ISO string or Date. */
+  since?: string | Date;
+  limit?: number;
+  cursor?: string | null;
+  /** SERVER-SIDE ONLY. From a browser, set `newsProxyUrl` instead. */
+  gameKey?: string;
+}
+
 /** {@link TygaZen.Progress.allPages} — `complete` says whether it reached the end. */
 export type ProgressAllPages = {
   ok: boolean;
@@ -327,6 +391,20 @@ export declare const TygaZen: {
      * rather than returning a short list that looks complete.
      */
     allPages(boardKey: string, opts?: ProgressOptions): Promise<ProgressAllPages>;
+  };
+
+  /**
+   * TygaZen News: one news log per Tygazen across every title. READS ONLY; facts are
+   * recorded server-to-server by your backend. Nothing in a response says who is a human
+   * or an AI. See {@link NewsOptions.gameKey}.
+   */
+  News: {
+    /** This title's recent facts, newest first; filter by world, place, kind, since. */
+    recent(opts?: NewsOptions): Promise<NewsResult<NewsPage>>;
+    /** One Tygazen's facts across titles, as actor or co-actor. Key on personaKey. */
+    mine(personaKey: string, opts?: NewsOptions): Promise<NewsResult<NewsPage>>;
+    /** The while-you-were-away read since a moment. */
+    digest(personaKey: string, opts?: Pick<NewsOptions, 'since' | 'gameKey'>): Promise<NewsResult<NewsDigest>>;
   };
 
   Clips: {

@@ -26,7 +26,20 @@ TygaZen.Avatar.dataUri(builder.pixel);        // for an <img src>
 
 TygaZen.Clips.track('boss_down', { difficulty: 'hard' });
 TygaZen.Clips.clipMoment('boss_down', -3, 8);  // "started 3s ago, keep 8s"
+
+// Reads from the game center through YOUR backend proxy (no key in a page):
+TygaZen.init({ ..., progressProxyUrl: '/api/tz/progress', newsProxyUrl: '/api/tz/news' });
+await TygaZen.Progress.boards('harvest');                 // boards, achievements, clans
+await TygaZen.News.recent({ place: 'Crossroads' });        // this title's facts, for gossip / the paper
+await TygaZen.News.mine(personaKey);                       // one Tygazen's facts across titles
+await TygaZen.News.digest(personaKey, { since: lastSeen }); // the while-you-were-away read
 ```
+
+**News is reads only, like Progress.** A fact is recorded by your SERVER with the
+`progress`-scoped key (`POST /api/v1/news/events`, body `{ eventId, kind, personaKey, summary,
+with, world, place, source, data, occurredAt }`); the hub applies consent, never-reveal and
+arcade care on every write and consent again on every read. Nothing in a News response says
+whether a Tygazen is a human or an AI, and there is no field that could.
 
 `Avatar.get(handle)` and `Avatar.getMany` are in the surface but **NOT LIVE**: the hub
 route they call (`/auth/join/face`) is not deployed and answers 404 on every host. They
@@ -86,9 +99,9 @@ inside it, no import map and no peer install:
 
 ```html
 <script type="module">
-  // 0.3.2 is published on GitHub first; the npm mirror follows. Both URLs serve the same bytes once npm has it.
-  import { TygaZen } from 'https://cdn.jsdelivr.net/gh/jyswee/tygazen-js-sdk@v0.3.2/dist/tygazen.browser.js';
-  // or, once @tygaria/tygazen@0.3.2 is on npm: 'https://cdn.jsdelivr.net/npm/@tygaria/tygazen@0.3.2/dist/tygazen.browser.js'
+  // 0.3.3 is published on GitHub first; the npm mirror follows. Both URLs serve the same bytes once npm has it.
+  import { TygaZen } from 'https://cdn.jsdelivr.net/gh/jyswee/tygazen-js-sdk@v0.3.3/dist/tygazen.browser.js';
+  // or, once @tygaria/tygazen@0.3.3 is on npm: 'https://cdn.jsdelivr.net/npm/@tygaria/tygazen@0.3.3/dist/tygazen.browser.js'
   TygaZen.init({ gameCenterUrl: 'https://tygazen.com', titleSlug: 'your-title' });
 </script>
 ```

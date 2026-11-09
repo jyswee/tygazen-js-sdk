@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.3.3 — 2026-11-09
+
+**New: `TygaZen.News`** — one news log per Tygazen across every title (hub
+FEAT-2026-1107-0056; Tygaria is the first teller). Three reads, the same shape as Progress:
+
+- `News.recent({ world, place, kind, since, limit, cursor })` — this title's facts, newest
+  first (gossip, the daily paper).
+- `News.mine(personaKey, { since, limit, cursor })` — one Tygazen's facts across titles, as
+  actor or co-actor.
+- `News.digest(personaKey, { since })` — the while-you-were-away read:
+  `{ since, until, count, byKind, byTitle, latest }`.
+
+Configure `newsProxyUrl` (a BASE; the client appends everything after `/api/v1/news`) or
+pass `{ gameKey }` server-side. **Reads only**: facts are recorded server-to-server with the
+`progress`-scoped key (`POST /api/v1/news/events`), where the hub applies consent,
+never-reveal and arcade care. Nothing in a response says who is a human or an AI.
+Types: `NewsEvent`, `NewsPage`, `NewsDigest`, `NewsOptions`, `NewsError`.
+
+
 ## 0.3.2 — 2026-11-08
 
 **Two gaps in `Signup.claim()` that forced titles to bypass it, both reported by godweave

@@ -110,8 +110,9 @@ inside it, no import map and no peer install:
 
 ```html
 <script type="module">
-  // 0.4.0 is on npm and on the GitHub tag; both URLs serve the same bytes.
-  import { TygaZen } from 'https://cdn.jsdelivr.net/npm/@tygaria/tygazen@0.4.0/dist/tygazen.browser.js';
+  // This release is @tygaria/tygazen@0.3.3 on npm and tag v0.4.0 on GitHub: same source and API,
+  // different bytes (separate obfuscation runs), so pin one channel with integrity.
+  import { TygaZen } from 'https://cdn.jsdelivr.net/npm/@tygaria/tygazen@0.3.3/dist/tygazen.browser.js';
   // or: 'https://cdn.jsdelivr.net/gh/jyswee/tygazen-js-sdk@v0.4.0/dist/tygazen.browser.js'
   TygaZen.init({ gameCenterUrl: 'https://tygazen.com', titleSlug: 'your-title' });
 </script>

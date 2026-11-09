@@ -6,7 +6,12 @@
   waiting on the generator image from blender. Moved out of 0.4.0 on 2026-11-09 so the three
   extensions already on the hub reach titles pinned to 0.3.1.
 
-## 0.4.0 — 2026-11-09
+## 0.4.0 — 2026-11-09 (on npm this release is `@tygaria/tygazen@0.3.3`)
+
+The npm publish ran from the tree a minute before the version bump, so npm carries this
+exact surface under the number 0.3.3 and the GitHub tag v0.4.0 carries it under 0.4.0.
+Same source (2cea28b), same modules, same API; the two bundles differ byte for byte only
+because each obfuscation run differs, so pin ONE channel with integrity, not both.
 
 News, Care and Rooms in one release. Hub side: News is on prod (1.0.317); Care and Rooms are
 on QA 1.0.320 and answer on prod once tyga-network rolls that image (requested 2026-11-09).

@@ -92,6 +92,10 @@ export interface TygaZenConfig {
    * posted server-to-server by your backend with a `vgk_` key scoped `progress`.
    */
   newsProxyUrl?: string;
+  /** READS only, a BASE: the client appends `/<personaKey>/care`. Server-side use passes `{ gameKey }`. */
+  careProxyUrl?: string;
+  /** READS only, a BASE: the client appends `/<personaKey>/room`. Server-side use passes `{ gameKey }`. */
+  roomsProxyUrl?: string;
   playerToken?: string | null;
 }
 
@@ -273,6 +277,39 @@ export interface NewsOptions {
   gameKey?: string;
 }
 
+/** A member's responsible-gaming settings. Member-owned, hub-held; titles only read. */
+export interface CareSettings {
+  excluded: boolean;
+  /** The decision: refuse wagering play when true and show `resource`. */
+  mustRefusePlay: boolean;
+  selfExclusion: { until: string | null; permanent: boolean; setAt: string | null } | null;
+  dailyLossCap: { amount: number; currency: 'GOLD'; resetsAt: string } | null;
+  /** A raise or removal waiting its 24 h deferral. */
+  dailyLossCapPending: { amount: number | null; effectiveAt: string } | null;
+  realityCheck: { everyMinutes: number } | null;
+  resource: { name: string; url: string; line: string };
+  updatedAt: string | null;
+}
+
+export interface CareError {
+  ok: false;
+  error: 'care-not-configured' | 'transport' | 'http';
+  status?: number;
+  detail?: string | null;
+}
+
+export type CareResult = ({ ok: true; status?: number; personaKey: string; care: CareSettings } & Record<string, unknown>) | CareError;
+
+export interface CareOptions {
+  /** SERVER-SIDE ONLY. From a browser, set `careProxyUrl` instead. */
+  gameKey?: string;
+}
+
+/** A Tygazen's appoiint room, as the hub holds it. */
+export interface Room { customerId: string; roomId: string; joinUrl: string | null; ensuredAt: string | null }
+export interface RoomsError { ok: false; error: 'rooms-not-configured' | 'transport' | 'http'; status?: number; detail?: string | null }
+export type RoomsResult = { ok: true; status?: number; personaKey?: string; pending: boolean; room: Room | null } | RoomsError;
+
 /** {@link TygaZen.Progress.allPages} — `complete` says whether it reached the end. */
 export type ProgressAllPages = {
   ok: boolean;
@@ -405,6 +442,21 @@ export declare const TygaZen: {
     mine(personaKey: string, opts?: NewsOptions): Promise<NewsResult<NewsPage>>;
     /** The while-you-were-away read since a moment. */
     digest(personaKey: string, opts?: Pick<NewsOptions, 'since' | 'gameKey'>): Promise<NewsResult<NewsDigest>>;
+  };
+
+  /**
+   * A member's responsible-gaming settings. READ-ONLY; the member sets them on the hub.
+   * `mayWager(result)` is true only for a successful read that says play is allowed.
+   */
+  Care: {
+    get(personaKey: string, opts?: CareOptions): Promise<CareResult>;
+    mayWager(result: CareResult | null | undefined): boolean;
+  };
+
+  /** A Tygazen's permanent video room at appoiint, opened through the game center. */
+  Rooms: {
+    /** `pending` true (202) while the hub's outbox has not reached the member; ask again shortly. */
+    open(personaKey: string, opts?: { gameKey?: string }): Promise<RoomsResult>;
   };
 
   Clips: {

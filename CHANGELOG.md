@@ -1,5 +1,30 @@
 # Changelog
 
+## Unreleased — 0.5.0
+
+- Body3D: a member's rigged 3D body as a CDN GLB on the avatar read (hub FEAT-2026-1105-0079),
+  waiting on the generator image from blender. Moved out of 0.4.0 on 2026-11-09 so the three
+  extensions already on the hub reach titles pinned to 0.3.1.
+
+## 0.4.0 — 2026-11-09
+
+News, Care and Rooms in one release. Hub side: News is on prod (1.0.317); Care and Rooms are
+on QA 1.0.320 and answer on prod once tyga-network rolls that image (requested 2026-11-09).
+Until then `Care.get` / `Rooms.open` against vipsallowed.com return the same error shape as any
+unknown route; `Care.mayWager` stays false on that, by design.
+
+- **New: `TygaZen.Rooms.open(personaKey)`** — a Tygazen's permanent video room at appoiint, opened
+  through the game center (hub FEAT-2026-1108-0084): `{ pending, room: { customerId, roomId, joinUrl } }`,
+  `pending` while the hub's outbox has not reached the member. Through `roomsProxyUrl` (a BASE,
+  appends `/<personaKey>/room`) or `{ gameKey }` server-side. No appoiint credential in any title.
+- **New: `TygaZen.Care`** — a member's responsible-gaming settings (daily loss cap, reality
+  check, self-exclusion), member-owned and hub-held (hub FEAT-2026-1108-0044). `Care.get(personaKey)`
+  through `careProxyUrl` (a BASE, appends `/<personaKey>/care`) or `{ gameKey }` server-side;
+  `Care.mayWager(result)` is true only for a successful read that says play is allowed, so an
+  unconfigured or failed read never reads as "no limits". The same `care` block rides inside
+  the exchange response. Reads only; no setter by design.
+
+
 ## 0.3.3 — 2026-11-09
 
 **New: `TygaZen.News`** — one news log per Tygazen across every title (hub

@@ -33,7 +33,18 @@ await TygaZen.Progress.boards('harvest');                 // boards, achievement
 await TygaZen.News.recent({ place: 'Crossroads' });        // this title's facts, for gossip / the paper
 await TygaZen.News.mine(personaKey);                       // one Tygazen's facts across titles
 await TygaZen.News.digest(personaKey, { since: lastSeen }); // the while-you-were-away read
+// Casino-style titles, before a wager (member-owned limits, hub-held; a title can only READ):
+const c = await TygaZen.Care.get(personaKey);              // { care: { excluded, mustRefusePlay, dailyLossCap, realityCheck, resource } }
+if (!TygaZen.Care.mayWager(c)) refuseWagerAndShow(c.ok ? c.care.resource : null);   // a failed read is never "no limits"
+// The Tygazen's permanent video room at appoiint, opened through the game center:
+const r = await TygaZen.Rooms.open(personaKey);            // { pending, room: { customerId, roomId, joinUrl } }
 ```
+
+The three proxy bases are `newsProxyUrl` (appends after `/api/v1/news`), `careProxyUrl` and
+`roomsProxyUrl` (both append after `/api/v1/players`: `/<personaKey>/care`, `/<personaKey>/room`).
+Server-side code passes `{ gameKey }` instead. None of these modules has a setter: facts are
+recorded by your server with the `progress`-scoped key, limits are set by the member on the hub,
+rooms are minted by the hub's own outbox against appoiint. No appoiint credential ever reaches a title.
 
 **News is reads only, like Progress.** A fact is recorded by your SERVER with the
 `progress`-scoped key (`POST /api/v1/news/events`, body `{ eventId, kind, personaKey, summary,
@@ -99,9 +110,9 @@ inside it, no import map and no peer install:
 
 ```html
 <script type="module">
-  // 0.3.3 is published on GitHub first; the npm mirror follows. Both URLs serve the same bytes once npm has it.
-  import { TygaZen } from 'https://cdn.jsdelivr.net/gh/jyswee/tygazen-js-sdk@v0.3.3/dist/tygazen.browser.js';
-  // or, once @tygaria/tygazen@0.3.3 is on npm: 'https://cdn.jsdelivr.net/npm/@tygaria/tygazen@0.3.3/dist/tygazen.browser.js'
+  // 0.4.0 is on npm and on the GitHub tag; both URLs serve the same bytes.
+  import { TygaZen } from 'https://cdn.jsdelivr.net/npm/@tygaria/tygazen@0.4.0/dist/tygazen.browser.js';
+  // or: 'https://cdn.jsdelivr.net/gh/jyswee/tygazen-js-sdk@v0.4.0/dist/tygazen.browser.js'
   TygaZen.init({ gameCenterUrl: 'https://tygazen.com', titleSlug: 'your-title' });
 </script>
 ```

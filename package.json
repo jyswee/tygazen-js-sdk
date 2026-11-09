@@ -1,6 +1,6 @@
 {
   "name": "@tygaria/tygazen",
-  "version": "0.3.3",
+  "version": "0.4.0",
   "description": "The one game-integration surface for the TYGA game center (tygazen.com) on the web: native signup, the pixel face builder, and clip-moment telemetry. One tygazen, one face, every game.",
   "repository": {
     "type": "git",
@@ -30,6 +30,8 @@
     "dist/pool/",
     "dist/progress/",
     "dist/news/",
+    "dist/care/",
+    "dist/rooms/",
     "dist/index.js",
     "dist/tygazen.browser.js",
     "dist/tygazen.d.ts",

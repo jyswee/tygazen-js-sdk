@@ -96,6 +96,8 @@ export interface TygaZenConfig {
   careProxyUrl?: string;
   /** READS only, a BASE: the client appends `/<personaKey>/room`. Server-side use passes `{ gameKey }`. */
   roomsProxyUrl?: string;
+  /** A BASE: everything after /api/v1/graph is appended. Your proxy sets personaKey to its own signed-in player. */
+  graphProxyUrl?: string;
   playerToken?: string | null;
 }
 
@@ -403,6 +405,16 @@ export interface CareOptions {
 
 /** A Tygazen's appoiint room, as the hub holds it. */
 export interface Room { customerId: string; roomId: string; joinUrl: string | null; ensuredAt: string | null }
+export interface GraphError { ok: false; error: 'graph-not-configured' | 'personaKey-required' | 'targetPersonaKey-required' | 'b-required' | 'transport' | 'http'; status?: number; detail?: string | null }
+export interface GraphMember { personaKey: string; handle: string; displayName: string; avatarUrl: string | null }
+export interface GraphEnvelope { ok: true; status?: number; success?: boolean; titleSlug?: string; schemaVersion?: number; servedAt?: string }
+export type GraphEdgeResult = (GraphEnvelope & { personaKey: string; targetPersonaKey: string; following: boolean; changed: boolean; friends: boolean }) | GraphError;
+export type GraphListResult = (GraphEnvelope & { personaKey: string; kind: 'friends' | 'followers' | 'following'; items: GraphMember[]; nextCursor: string | null }) | GraphError;
+export type GraphRelationResult = (GraphEnvelope & { a: string; b: string; friends: boolean; aFollowsB: boolean; bFollowsA: boolean }) | GraphError;
+export interface GraphChange { id: string; op: 'follow' | 'unfollow'; personaKey: string; targetPersonaKey: string; at: string }
+export type GraphChangesResult = (GraphEnvelope & { events: GraphChange[]; nextCursor: string | null; more: boolean }) | GraphError;
+export interface GraphOptions { gameKey?: string }
+export interface GraphPageOptions extends GraphOptions { limit?: number; cursor?: string }
 export interface RoomsError { ok: false; error: 'rooms-not-configured' | 'transport' | 'http'; status?: number; detail?: string | null }
 export type RoomsResult = { ok: true; status?: number; personaKey?: string; pending: boolean; room: Room | null } | RoomsError;
 
@@ -570,6 +582,17 @@ export declare const TygaZen: {
   Rooms: {
     /** `pending` true (202) while the hub's outbox has not reached the member; ask again shortly. */
     open(personaKey: string, opts?: { gameKey?: string }): Promise<RoomsResult>;
+  };
+
+  /** Who follows whom across every Tygazen title (hub /api/v1/graph). Friends are mutual follows. */
+  Graph: {
+    follow(personaKey: string, targetPersonaKey: string, opts?: GraphOptions): Promise<GraphEdgeResult>;
+    unfollow(personaKey: string, targetPersonaKey: string, opts?: GraphOptions): Promise<GraphEdgeResult>;
+    friends(personaKey: string, opts?: GraphPageOptions): Promise<GraphListResult>;
+    followers(personaKey: string, opts?: GraphPageOptions): Promise<GraphListResult>;
+    following(personaKey: string, opts?: GraphPageOptions): Promise<GraphListResult>;
+    relation(a: string, b: string, opts?: GraphOptions): Promise<GraphRelationResult>;
+    changes(opts?: { cursor?: string; gameKey?: string }): Promise<GraphChangesResult>;
   };
 
   Clips: {

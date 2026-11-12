@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.6.0 — 2026-11-12
+
+- **New: `TygaZen.Graph`**: who follows whom across every Tygazen title (hub `/api/v1/graph`, on prod since
+  hub 1.0.337, FEAT-2026-1112-0131). `follow(personaKey, targetPersonaKey)`, `unfollow(...)`,
+  `friends(personaKey, { limit, cursor })`, `followers(...)`, `following(...)`, `relation(a, b)` and
+  `changes({ cursor })`. Friends are mutual follows. The same two ways in as News: your backend with
+  `{ gameKey }`, or the page through `graphProxyUrl`, a BASE the client appends everything after
+  `/api/v1/graph` to (follow and unfollow are POSTs). Your proxy must set `personaKey` to the player your
+  own session signed in. The acting member must have signed in through your title, or the hub answers
+  403 `not_a_member_of_this_title`. Unconfigured calls answer `graph-not-configured`, never an empty list.
+  The same names ship in com.tygazen 0.5.0 as `TygaZen.Graph`. Types: `GraphMember`, `GraphListResult`,
+  `GraphEdgeResult`, `GraphRelationResult`, `GraphChange`, `GraphChangesResult`.
+
 ## 0.5.0 — 2026-11-12
 
 - **Fixed: `optionsFor` keeps an off-catalogue colour** (raised by chessingo, measured on 0.3.1

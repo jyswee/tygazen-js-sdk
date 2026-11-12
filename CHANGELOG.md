@@ -1,10 +1,40 @@
 # Changelog
 
-## Unreleased — 0.5.0
+## 0.5.0 — 2026-11-12
 
-- Body3D: a member's rigged 3D body as a CDN GLB on the avatar read (hub FEAT-2026-1105-0079),
-  waiting on the generator image from blender. Moved out of 0.4.0 on 2026-11-09 so the three
-  extensions already on the hub reach titles pinned to 0.3.1.
+- **Fixed: `optionsFor` keeps an off-catalogue colour** (raised by chessingo, measured on 0.3.1
+  and 0.3.3). A stored `skinColor`, `hairColor` or `clothingColor` that is a valid 6-hex but not
+  one of the swatches was dropped, so the builder drew the seed's colour instead (green hair on
+  a likeness recipe). Any lowercase 6-hex now maps through, as it does on the hub. The hub's
+  sanitizer stays the gate on what may be stored.
+- **New: `TygaZen.Signup.humanCheck()` and a `check` answer on `claim`, `login` and `resend`**
+  (hub BUG-2026-1111-0092, raised by chessingo). The hub now asks one question with six
+  words before it mails a link, and checks the answer server-side. `humanCheck()` returns
+  `{ ok, mode, required, check: { token, question, options } | null }`; show the question,
+  and pass `check: { token, answer }` on the send. A refused answer comes back as
+  `field: 'check'` with the NEXT question in `check`, so the page shows it without a second
+  read. One question is good for one send, right or wrong. While `required` is false a send
+  with no answer still goes through, so a page can ship the question before the hub requires
+  it. Against a hub that does not have the route yet, `humanCheck()` answers
+  `{ ok: false, error: 'not_live', check: null }` and every send behaves as it did.
+  Also new on refusals: `reason: 'too_many_attempts'` (HTTP 429 with `retryIn`), the hub's
+  ceiling on links asked for from one network. Types: `HumanCheck`, `HumanCheckAnswer`,
+  `HumanCheckRead`.
+- **Fixed: `Signup.claim` / `builder.claim` / `Signup.login` now carry the hub's refusal**
+  (BUG-2026-1111-0105, measured by rsprogue on 0.3.3). A refused claim came back as
+  `{ ok: false, step: 'claim', error: '400 ' }` with the hub's field, reason and message
+  dropped. It now returns `error` set to the hub's own message when it gave one, plus
+  `status`, `field`, `reason`, and `retryIn` (seconds) on a 429, on claim and on login alike.
+  A network failure or a route that is not live keeps the transport's error, as before.
+- **New: `TygaZen.News.polls(opts)` and `TygaZen.News.poll(id)`** — read the polls Tygazens put
+  to each other (hub FEAT-2026-1110-0252, on prod since hub 1.0.330). Same proxy base and same
+  `news:read` key as the rest of News. `polls({ state, scope, personaKey, limit, cursor })` pages
+  with `nextCursor`; `poll(id)` takes the hub's `id` and refuses an empty one locally
+  (`poll-id-required`) so it can never fall through to the list. Reads only: a poll is set up
+  and answered by the title's server. Types: `NewsPoll`, `NewsPollPage`, `NewsPollRead`,
+  `NewsPollOptions`.
+- Body3D (hub FEAT-2026-1105-0079) is NOT in 0.5.0. It still waits on the generator image from
+  blender and moves to a later release so the fixes above are not held behind it.
 
 ## 0.4.0 — 2026-11-09 (on npm this release is `@tygaria/tygazen@0.3.3`)
 

@@ -105,6 +105,28 @@ export interface Player {
   handle: string;
 }
 
+/** One question from the hub's human check: show `question`, and `options` as buttons. */
+export interface HumanCheck {
+  /** Opaque. Send it back with the answer. Good for ONE send, right or wrong. */
+  token: string;
+  question: string;
+  /** Six words; exactly one answers the question. Send the tapped word back verbatim. */
+  options: string[];
+}
+
+/** The player's answer: the question's token and the word they tapped. */
+export interface HumanCheckAnswer { token: string; answer: string; }
+
+/**
+ * What `Signup.humanCheck()` returns. `check` is null when the check is off, and also
+ * when the read failed (a hub without the route answers `not_live`): show nothing, send
+ * without an answer, and the hub decides. `required` is true when a send with no answer
+ * is refused (`reason: 'check_required'`).
+ */
+export type HumanCheckRead =
+  | { ok: true; mode: 'off' | 'optional' | 'enforce'; required: boolean; check: HumanCheck | null }
+  | { ok: false; status?: number; error: string; required: false; check: null };
+
 export interface ClaimFields {
   handle: string;
   email: string;
@@ -119,11 +141,26 @@ export interface ClaimFields {
    * Omit for a claim that should end on the hub.
    */
   returnUrl?: string;
+  /** The player's answer to `Signup.humanCheck()`. Omit when no question was shown. */
+  check?: HumanCheckAnswer;
 }
 
+/**
+ * A refused claim carries what the hub said: `error` is the hub's own message when it gave
+ * one (otherwise the transport's status text), `status` the HTTP status, and `field` /
+ * `reason` name what was refused (for example `date_of_birth` / `under_age`).
+ *
+ * A refused human check is `field: 'check'` with `reason` one of `check_required`,
+ * `check_wrong`, `check_expired`, `check_used` (HTTP 400, and `check` holds the NEXT
+ * question to show) or `check_locked` (HTTP 429 with `retryIn`, too many wrong answers
+ * from this network today). `reason: 'too_many_attempts'` (HTTP 429 with `retryIn`) is
+ * the hub's ceiling on links asked for from one network.
+ */
 export type ClaimResult =
   | { ok: true; sentTo?: string }
-  | { ok: false; step: 'handle' | 'claim'; error?: string; field?: string };
+  | { ok: false; step: 'handle' | 'claim'; error?: string; status?: number; field?: string; reason?: string; retryIn?: number;
+      /** The next question, when the refusal was about the human check. */
+      check?: HumanCheck };
 
 /** What {@link mount} hands back: it owns the config, you drive it. */
 export interface FaceBuilder {
@@ -149,11 +186,13 @@ export declare class GameCenterClient {
   lastError: string;
   headers(extra?: Record<string, string>): Record<string, string>;
   checkHandle(handle: string): Promise<Envelope<{ available?: boolean; message?: string }>>;
+  /** GET /auth/join/check : the raw read behind `Signup.humanCheck()`. */
+  humanCheck(): Promise<Envelope<{ ok?: boolean; mode?: string; required?: boolean; check?: HumanCheck | null }>>;
   board(): Promise<Envelope>;
   claim(fields: ClaimFields): Promise<Envelope<{ ok?: boolean; sentTo?: string; message?: string; field?: string }>>;
-  resend(email: string): Promise<Envelope>;
+  resend(email: string, opts?: { check?: HumanCheckAnswer }): Promise<Envelope>;
   /** POST /auth/join/login : a returning member's sign-in link, carrying the way back. */
-  login(email: string, opts?: { returnUrl?: string }): Promise<Envelope<{ ok?: boolean; sentTo?: string; message?: string; field?: string; reason?: string }>>;
+  login(email: string, opts?: { returnUrl?: string; check?: HumanCheckAnswer }): Promise<Envelope<{ ok?: boolean; sentTo?: string; message?: string; field?: string; reason?: string }>>;
   claimStatus(email: string): Promise<Envelope>;
   face(handle: string): Promise<Envelope>;
 }
@@ -221,7 +260,7 @@ export interface ProgressOptions {
 /** News' refusal shape. An unconfigured call reports this rather than an empty feed. */
 export interface NewsError {
   ok: false;
-  error: 'news-not-configured' | 'transport' | 'http';
+  error: 'news-not-configured' | 'transport' | 'http' | 'poll-id-required';
   status?: number;
   detail?: string | null;
 }
@@ -271,6 +310,63 @@ export interface NewsOptions {
   kind?: NewsEvent['kind'];
   /** ISO string or Date. */
   since?: string | Date;
+  limit?: number;
+  cursor?: string | null;
+  /** SERVER-SIDE ONLY. From a browser, set `newsProxyUrl` instead. */
+  gameKey?: string;
+}
+
+/**
+ * A poll: a question any Tygazen sets up and any Tygazen answers. It binds nothing.
+ * Counts are served; who answered never is. Nothing here says whether the author or a
+ * voter is a human or an AI, by design.
+ */
+export interface NewsPoll {
+  /** The hub's id. Pass this to `News.poll(id)`. */
+  id: string;
+  /** The id the title's server gave the poll when it set it up, or null for one made on the hub. */
+  pollId: string | null;
+  question: string;
+  options: Array<{ key: string; label: string; votes: number }>;
+  /** Answers counted so far, across every option. */
+  votes: number;
+  state: 'open' | 'closed';
+  opensAt: string | null;
+  closesAt: string | null;
+  /** null when the author has opted out of News. */
+  author: { personaKey: string } | null;
+  /** The slug of the title whose server set the poll up, or the hub's own value. */
+  via: string;
+  /** The leading option's key once the poll is closed. null while it runs, on a tie, and when nobody answered. */
+  winner: string | null;
+  /** Where a Tygazen answers it on the hub, in their own session. */
+  voteUrl: string;
+}
+
+export interface NewsPollPage {
+  titleSlug: string;
+  schemaVersion: number;
+  servedAt: string;
+  state: 'open' | 'closed';
+  count: number;
+  polls: NewsPoll[];
+  nextCursor: string | null;
+}
+
+export interface NewsPollRead {
+  titleSlug: string;
+  schemaVersion: number;
+  servedAt: string;
+  poll: NewsPoll;
+}
+
+export interface NewsPollOptions {
+  /** 'open' when omitted. */
+  state?: 'open' | 'closed';
+  /** 'own' = only the polls this title's server set up. */
+  scope?: 'all' | 'own';
+  /** Only this Tygazen's polls. The member id, never a handle. */
+  personaKey?: string;
   limit?: number;
   cursor?: string | null;
   /** SERVER-SIDE ONLY. From a browser, set `newsProxyUrl` instead. */
@@ -352,15 +448,28 @@ export declare const TygaZen: {
     /** A fresh random config. */
     newConfig(): PixelConfig;
     claim(fields: ClaimFields): Promise<ClaimResult>;
-    resend(email: string): Promise<Envelope>;
+    /**
+     * The hub's human check for claim, login and resend: one question, six words, one tap.
+     * Read one per attempt, show it, and pass `{ token, answer }` as `check`.
+     */
+    humanCheck(): Promise<HumanCheckRead>;
+    /**
+     * The raw envelope, as before. A refused human check is `status` 400 or 429 with
+     * `data.field === 'check'`, and `data.check` holds the next question.
+     */
+    resend(email: string, opts?: { check?: HumanCheckAnswer }): Promise<Envelope>;
     /**
      * "Already a Tygazen? Log in" inside a title: one email, your https returnUrl, and
      * the hub mails a sign-in link that lands the member on it with `?tz_code=`. Unknown
      * emails answer exactly like known ones (anti-enumeration). Replaces openHub({ returnTo }).
      */
-    login(email: string, opts?: { returnUrl?: string }): Promise<
+    login(email: string, opts?: { returnUrl?: string; check?: HumanCheckAnswer }): Promise<
       | { ok: true; sentTo?: string }
-      | { ok: false; step: 'login'; error?: string; field?: string; reason?: string; status?: number }>;
+      | { ok: false; step: 'login'; error?: string; field?: string; reason?: string; status?: number;
+          /** Seconds until another link may be asked for; present on a 429. */
+          retryIn?: number;
+          /** The next question, when the refusal was about the human check. */
+          check?: HumanCheck }>;
   };
 
   Avatar: {
@@ -442,6 +551,10 @@ export declare const TygaZen: {
     mine(personaKey: string, opts?: NewsOptions): Promise<NewsResult<NewsPage>>;
     /** The while-you-were-away read since a moment. */
     digest(personaKey: string, opts?: Pick<NewsOptions, 'since' | 'gameKey'>): Promise<NewsResult<NewsDigest>>;
+    /** Polls, newest first: open ones unless `state: 'closed'`. Reads only. */
+    polls(opts?: NewsPollOptions): Promise<NewsResult<NewsPollPage>>;
+    /** One poll by the hub's `id`. An empty id is refused locally with 'poll-id-required'. */
+    poll(id: string, opts?: Pick<NewsPollOptions, 'gameKey'>): Promise<NewsResult<NewsPollRead>>;
   };
 
   /**

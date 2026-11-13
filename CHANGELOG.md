@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.7.0 — 2026-11-13
+
+- **New: `TygaZen.Presence`** (not usable in production until the game center issues player tokens for
+  realtime). Which friends are online, in which title, and whether they can be joined.
+  `const p = await TygaZen.Presence.start({ client, me: personaKey })`, then `p.watch(friendPersonaKeys)`,
+  `p.on((friend) => ...)`, `p.get(personaKey)`, `p.list()`, `p.setStatus({ status, roomId, joinable, meta })`,
+  `p.unwatch(personaKey)`, `p.refresh()`, `p.stop()`. A friend reads as
+  `{ personaKey, online, status, gameId, roomId, joinable, meta, statusAt }`. `client` is an
+  `@oddsockets/js` 2.0.2+ instance built with a `tokenProvider`; this package gains no dependency and
+  mints nothing. Online is whether the member is on their own status channel right now, so a closed tab
+  turns them offline with nobody having to say so. A status is believed only when the service stamped its
+  sender as the member themselves, and only if it was published since they last came online. Unconfigured
+  calls answer `presence-not-configured`, never an empty list; a `me` that is not the identity the token
+  carries answers `identity-mismatch`. Types: `PresenceSession`, `PresenceFriend`, `PresenceStatus`,
+  `PresenceStartOptions`, `PresenceError`.
+
 ## 0.6.0 — 2026-11-12
 
 - **New: `TygaZen.Graph`**: who follows whom across every Tygazen title (hub `/api/v1/graph`, on prod since

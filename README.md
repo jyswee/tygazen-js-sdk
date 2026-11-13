@@ -110,8 +110,8 @@ inside it, no import map and no peer install:
 
 ```html
 <script type="module">
-  // 0.6.0, from the GitHub tag. Pin it with integrity.
-  import { TygaZen } from 'https://cdn.jsdelivr.net/gh/jyswee/tygazen-js-sdk@v0.6.0/dist/tygazen.browser.js';
+  // 0.7.0, from the GitHub tag. Pin it with integrity.
+  import { TygaZen } from 'https://cdn.jsdelivr.net/gh/jyswee/tygazen-js-sdk@v0.7.0/dist/tygazen.browser.js';
   TygaZen.init({ gameCenterUrl: 'https://tygazen.com', titleSlug: 'your-title' });
 </script>
 ```

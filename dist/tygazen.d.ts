@@ -98,6 +98,8 @@ export interface TygaZenConfig {
   roomsProxyUrl?: string;
   /** A BASE: everything after /api/v1/graph is appended. Your proxy sets personaKey to its own signed-in player. */
   graphProxyUrl?: string;
+  /** Presence only: what a member's status channel name starts with. Leave unset unless the game center tells you otherwise. */
+  presenceChannelPrefix?: string;
   playerToken?: string | null;
 }
 
@@ -418,6 +420,55 @@ export interface GraphPageOptions extends GraphOptions { limit?: number; cursor?
 export interface RoomsError { ok: false; error: 'rooms-not-configured' | 'transport' | 'http'; status?: number; detail?: string | null }
 export type RoomsResult = { ok: true; status?: number; personaKey?: string; pending: boolean; room: Room | null } | RoomsError;
 
+export interface PresenceError { ok: false; error: 'presence-not-configured' | 'me-required' | 'identity-mismatch' | 'client' | 'transport' | 'stopped'; detail?: string | null }
+/** What a title says about its player. `status` is free text; 'online' when not given. */
+export interface PresenceStatusFields { status?: string; gameId?: string; roomId?: string; joinable?: boolean; meta?: Record<string, unknown> }
+export interface PresenceStatus { status: string; gameId: string | null; roomId: string | null; joinable: boolean; meta: Record<string, unknown> | null }
+/** One watched friend. Not online: `status` 'offline', no game, no room, `joinable` false. */
+export interface PresenceFriend extends PresenceStatus { personaKey: string; online: boolean; statusAt: string | null }
+export interface PresenceFailure { personaKey: string | null; error: 'personaKey-required' | 'transport'; detail?: string }
+/** A personaKey, or { personaKey, channel } when the game center names the channel. */
+export type PresenceWatchItem = string | { personaKey: string; channel?: string };
+/** The realtime client Presence is handed: an @oddsockets/js 2.0.2+ instance holding a player token. */
+export interface PresenceClient {
+  connect(): Promise<unknown>;
+  disconnect(): void;
+  channel(name: string): unknown;
+  on(event: string, fn: (...args: unknown[]) => void): unknown;
+  off(event: string, fn: (...args: unknown[]) => void): unknown;
+  readonly connectionState?: string;
+}
+export interface PresenceStartOptions {
+  /** The signed-in player's personaKey. Must be the identity the player token carries. */
+  me: string;
+  client?: PresenceClient;
+  /** Instead of `client`: the realtime client class and a token provider; Presence then owns the connection. */
+  OddSockets?: new (config: Record<string, unknown>) => PresenceClient;
+  tokenProvider?: () => Promise<unknown>;
+  /** The first status, published before start() answers. Default { status: 'online', gameId: titleSlug }. */
+  status?: PresenceStatusFields;
+  channelPrefix?: string;
+  channelFor?: (personaKey: string) => string;
+  historyCount?: number;
+  /** Re-read every watched friend on a timer. Off unless set; costs one read per friend each time. */
+  reconcileMs?: number;
+}
+export interface PresenceSession {
+  ok: true;
+  me: string;
+  setStatus(fields?: PresenceStatusFields): Promise<{ ok: true; status: PresenceStatus } | PresenceError>;
+  /** A friend that could not be watched is always named in `failed`, never dropped. */
+  watch(friends: PresenceWatchItem | PresenceWatchItem[]): Promise<{ ok: boolean; watching: number; failed: PresenceFailure[] } | PresenceError>;
+  unwatch(personaKey: string): Promise<{ ok: true; watching: number } | (PresenceError & { watching: number })>;
+  refresh(): Promise<{ ok: boolean; failed: PresenceFailure[] } | PresenceError>;
+  stop(): Promise<{ ok: true }>;
+  /** null when that personaKey is not watched. */
+  get(personaKey: string): PresenceFriend | null;
+  list(): PresenceFriend[];
+  /** fn(friend) on every change to a watched friend. Returns a function that removes it. */
+  on(fn: (friend: PresenceFriend) => void): () => void;
+}
+
 /** {@link TygaZen.Progress.allPages} — `complete` says whether it reached the end. */
 export type ProgressAllPages = {
   ok: boolean;
@@ -593,6 +644,15 @@ export declare const TygaZen: {
     following(personaKey: string, opts?: GraphPageOptions): Promise<GraphListResult>;
     relation(a: string, b: string, opts?: GraphOptions): Promise<GraphRelationResult>;
     changes(opts?: { cursor?: string; gameKey?: string }): Promise<GraphChangesResult>;
+  };
+
+  /**
+   * Which friends are online, in which title, and whether they can be joined. start() comes
+   * online and answers a session; an unconfigured call answers 'presence-not-configured',
+   * never an empty list.
+   */
+  Presence: {
+    start(opts: PresenceStartOptions): Promise<PresenceSession | PresenceError>;
   };
 
   Clips: {
